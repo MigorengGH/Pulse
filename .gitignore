@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# Local env — contains API keys, never commit
+.env
+
 # Expo
 .expo/
 dist/
