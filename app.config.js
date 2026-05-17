@@ -14,7 +14,11 @@ module.exports = {
   },
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.mfahimi.pulse"
+    bundleIdentifier: "com.mfahimi.pulse",
+    infoPlist: {
+      UIBackgroundModes: ["processing"],
+      BGTaskSchedulerPermittedIdentifiers: ["com.expo.modules.backgroundtask.processing"]
+    }
   },
   android: {
     adaptiveIcon: {
@@ -31,12 +35,13 @@ module.exports = {
   plugins: [
     "expo-router",
     "expo-font",
-    "expo-notifications"
+    "expo-notifications",
+    "expo-background-task"
   ],
   extra: {
     geminiKey: process.env.EXPO_PUBLIC_GEMINI_KEY || "",
     eas: {
-      projectId: "d4923077-5337-478a-b79f-cf2ec942fd40"
+      projectId: "2d8b157c-5060-463c-9b6e-ad755d405677"
     }
   }
 };

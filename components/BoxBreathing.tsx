@@ -60,7 +60,7 @@ export default function BoxBreathing() {
             const t2 = setTimeout(() => {
               runCycle();
             }, PHASE_DURATION);
-          }, PHASE_DURATION);
+          });
         }, PHASE_DURATION);
       });
     };

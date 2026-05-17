@@ -183,7 +183,7 @@ export default function SettingsScreen() {
           ) : (
             <>
               <Text style={{ color: Colors.accent, fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 16 }}>🎯 Demo Mode</Text>
-              <Text style={{ color: Colors.textDark, fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, marginTop: 6 }}>7-day mock data + AI nudge</Text>
+              <Text style={{ color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, marginTop: 6 }}>7-day mock data + AI nudge</Text>
             </>
           )}
         </TouchableOpacity>

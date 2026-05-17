@@ -13,6 +13,7 @@ interface AuraState {
   pickupsToday: number;
   pickupsLastHour: number;
   lastPickupTime: number | null;
+  ignoredNotificationsCount: number;
 
   // ─── Nudge ──────────────────────────────────────────────────
   lastNudgeTime: number | null;
@@ -40,6 +41,7 @@ interface AuraState {
   setInsomniaSignal: (isInsomnia: boolean) => void;
   setMovementState: (state: 'still' | 'moving' | 'unknown') => void;
   setPickups: (today: number, lastHour: number, lastPickup: number | null) => void;
+  setIgnoredNotificationsCount: (count: number) => void;
   setLastNudgeTime: (time: number | null) => void;
   setShowNudgeBanner: (show: boolean) => void;
   setNudgeHistory: (nudges: NudgeRecord[]) => void;
@@ -64,6 +66,7 @@ export const useAuraStore = create<AuraState>((set) => ({
   pickupsToday: 0,
   pickupsLastHour: 0,
   lastPickupTime: null,
+  ignoredNotificationsCount: 0,
   lastNudgeTime: null,
   showNudgeBanner: false,
   nudgeHistory: [],
@@ -88,6 +91,7 @@ export const useAuraStore = create<AuraState>((set) => ({
   setInsomniaSignal: (insomniaSignal) => set({ insomniaSignal }),
   setMovementState: (movementState) => set({ movementState }),
   setPickups: (pickupsToday, pickupsLastHour, lastPickupTime) => set({ pickupsToday, pickupsLastHour, lastPickupTime }),
+  setIgnoredNotificationsCount: (ignoredNotificationsCount) => set({ ignoredNotificationsCount }),
   setLastNudgeTime: (lastNudgeTime) => set({ lastNudgeTime }),
   setShowNudgeBanner: (showNudgeBanner) => set({ showNudgeBanner }),
   setNudgeHistory: (nudgeHistory) => set({ nudgeHistory }),

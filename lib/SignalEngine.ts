@@ -3,12 +3,75 @@ import { AppState, AppStateStatus } from 'react-native';
 import * as Battery from 'expo-battery';
 import * as Notifications from 'expo-notifications';
 import { Accelerometer } from 'expo-sensors';
+import * as TaskManager from 'expo-task-manager';
+import * as BackgroundTask from 'expo-background-task';
 import { useAuraStore } from '../store/useAuraStore';
 import type { SignalEvent } from '../types';
 import { calculateStressScore } from './StressCalculator';
 import { loadSignals, saveSignals, loadBaseline, loadNudges, loadPreferences, countDaysOfData } from './storage';
 import { buildAndSaveBaseline } from './baseline';
 import { analyzeCurrentState } from './detector';
+
+const BACKGROUND_HEARTBEAT_TASK = 'background-heartbeat-task';
+
+TaskManager.defineTask(BACKGROUND_HEARTBEAT_TASK, async () => {
+  try {
+    console.log('[Background] Heartbeat running...');
+
+    const signals = await loadSignals();
+    const now = Date.now();
+
+    const batteryState = await Battery.getBatteryStateAsync();
+    const isCharging = batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL;
+    const hour = new Date().getHours();
+    const isLateNight = hour >= 23 || hour < 5;
+
+    let isInsomnia = false;
+    let newSignals = [...signals];
+
+    if (isCharging && isLateNight) {
+      isInsomnia = true;
+      const insomniaSignal: SignalEvent = { timestamp: now, type: 'insomnia' };
+      newSignals.push(insomniaSignal);
+      console.log('[Background] Insomnia detected (charging late night)');
+    }
+
+    const state = useAuraStore.getState();
+    if (newSignals.length > signals.length) {
+      await saveSignals(newSignals);
+      state.setSignals(newSignals);
+      state.setInsomniaSignal(isInsomnia);
+    }
+
+    const presented = await Notifications.getPresentedNotificationsAsync();
+    state.setIgnoredNotificationsCount(presented.length);
+
+    const newScore = calculateStressScore();
+    state.setStressScore(newScore);
+
+    console.log(`[Background] Ignores: ${presented.length}, Stress: ${newScore}`);
+
+    if (newScore > 65) {
+      const lastNudge = state.lastNudgeTime;
+      if (!lastNudge || now - lastNudge > 90 * 60 * 1000) {
+        state.setLastNudgeTime(now);
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Mindful Break Needed?",
+            body: "Your phone behavior suggests elevated stress. Tap here for a quick pause.",
+            sound: true,
+          },
+          trigger: null,
+        });
+      }
+    }
+
+    return BackgroundTask.BackgroundTaskResult.Success;
+  } catch (error) {
+    console.error('[Background] Heartbeat task failed:', error);
+    return BackgroundTask.BackgroundTaskResult.Failed;
+  }
+});
 
 export const useSignalEngine = () => {
   const store = useAuraStore();
@@ -23,8 +86,33 @@ export const useSignalEngine = () => {
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
       }),
     });
+
+    const checkPresentedNotifications = async () => {
+      try {
+        const presented = await Notifications.getPresentedNotificationsAsync();
+        store.setIgnoredNotificationsCount(presented.length);
+      } catch (err) {
+        console.error('Failed to get presented notifications', err);
+      }
+    };
+
+    const registerBackgroundHeartbeat = async () => {
+      try {
+        const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_HEARTBEAT_TASK);
+        if (!isRegistered) {
+          await BackgroundTask.registerTaskAsync(BACKGROUND_HEARTBEAT_TASK, {
+            minimumInterval: 15 * 60, // 15 minutes
+          });
+          console.log('[Background] Heartbeat task registered successfully!');
+        }
+      } catch (err) {
+        console.error('[Background] Failed to register task', err);
+      }
+    };
 
     // Load all persisted state on startup
     const init = async () => {
@@ -44,6 +132,10 @@ export const useSignalEngine = () => {
 
       // Try to build/refresh baseline on startup
       await buildAndSaveBaseline();
+
+      // Run initial checks
+      await checkPresentedNotifications();
+      await registerBackgroundHeartbeat();
 
       // Run initial analysis
       await analyzeCurrentState();
@@ -76,6 +168,7 @@ export const useSignalEngine = () => {
 
     // Stress score + analysis loop (every 1 min)
     const stressInterval = setInterval(async () => {
+      await checkPresentedNotifications();
       recomputeStress();
       // Re-analyze every 5 minutes
       if (Date.now() % (5 * 60 * 1000) < 60 * 1000) {

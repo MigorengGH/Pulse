@@ -61,6 +61,40 @@ export const analyzeCurrentState = async (): Promise<AnalysisResult> => {
     triggers.push('Phone active while charging late at night');
   }
 
+  // 6. Unusually long session duration (avoidance or flow) (+20)
+  const now = Date.now();
+  const twoHoursAgo = now - 2 * 60 * 60 * 1000;
+  const recentSessions = state.signals.filter(s => s.type === 'session' && s.durationMs && s.timestamp >= twoHoursAgo);
+  const longSessionThresholdMs = 45 * 60 * 1000; // 45 minutes
+  const avgSessionMs = (baseline.overall.avgSessionDuration || 15) * 60 * 1000;
+  const dynamicThresholdMs = Math.max(longSessionThresholdMs, avgSessionMs * 2);
+
+  const hasLongSession = recentSessions.some(s => (s.durationMs || 0) > dynamicThresholdMs);
+  if (hasLongSession) {
+    score += 20;
+    triggers.push('Unusually long phone session (avoidance or flow)');
+  }
+
+  // 7. Rapid phone checking (restlessness) (+15)
+  const hourAgo = now - 60 * 60 * 1000;
+  const pickupsLastHour = state.signals.filter(s => s.type === 'pickup' && s.timestamp >= hourAgo).length;
+  if (pickupsLastHour > 10) {
+    score += 15;
+    triggers.push('Rapid phone checking (restlessness)');
+  }
+
+  // 8. Still and scrolling late at night (in-bed scrolling) (+15)
+  if (timeBucket === 'NIGHT' && state.movementState === 'still') {
+    score += 15;
+    triggers.push('Late night scrolling while still (in-bed scrolling)');
+  }
+
+  // 9. Multiple ignored notifications (withdrawal/avoidance) (+15)
+  if (state.ignoredNotificationsCount >= 3) {
+    score += 15;
+    triggers.push('Multiple ignored notifications (withdrawal/avoidance)');
+  }
+
   // Cap at 100
   score = Math.min(100, score);
 

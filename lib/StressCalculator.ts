@@ -43,6 +43,11 @@ export const calculateStressScore = (): number => {
     }
   }
 
+  // ─── Ignored notifications ──────────────────────────────────
+  if (state.ignoredNotificationsCount >= 3) {
+    score += 10; // High uncleared notification count adds to stress index
+  }
+
   // ─── Deviation awareness (if baseline exists) ──────────────
   if (state.baseline) {
     const bucketBaseline = state.baseline.buckets[timeBucket];
