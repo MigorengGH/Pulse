@@ -84,9 +84,14 @@ export default function PatternsScreen() {
     ];
 
     for (const [daysAgo, count, avgMins] of dayPatterns) {
-      const base = now - daysAgo * dayMs;
+      const startOfDay = new Date(now - daysAgo * dayMs).setHours(0, 0, 0, 0);
+      const spanMs = daysAgo === 0 
+        ? (now - startOfDay) // for today, only generate up to the current hour to avoid future timestamps
+        : 24 * 60 * 60 * 1000; // for past days, distribute over the entire 24h
+
       for (let i = 0; i < count; i++) {
-        const ts = base + i * 3600000 + Math.floor(Math.random() * 3600000);
+        // Distribute signals evenly across the available span of the day
+        const ts = startOfDay + (i * spanMs / count) + Math.floor(Math.random() * (spanMs / (count * 2)));
         demoSignals.push({ timestamp: ts, type: 'pickup' });
         demoSignals.push({ timestamp: ts + 1000, type: 'session', durationMs: avgMins * 60 * 1000 });
       }

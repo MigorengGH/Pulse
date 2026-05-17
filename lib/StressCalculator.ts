@@ -43,9 +43,11 @@ export const calculateStressScore = (): number => {
   }
 
   // ─── Late night + still ────────────────────────────────────
-  if (timeBucket === 'NIGHT') {
+  const isNightBucket = state.isDemoMode ? true : (timeBucket === 'NIGHT');
+  const isMovementStill = state.isDemoMode ? true : (state.movementState === 'still');
+  if (isNightBucket) {
     score += 10; // Being on phone at night adds baseline stress
-    if (state.movementState === 'still') {
+    if (isMovementStill) {
       score += 10; // Still and on phone late = doomscrolling
     }
   }
@@ -58,7 +60,8 @@ export const calculateStressScore = (): number => {
   // ─── Charging late night + playing phone constantly ────────
   const constantPlayThresholdMins = state.isDemoMode ? (15 / 60) : 15; // 15 seconds in demo mode, 15 minutes in real life
   const isPlayingConstantly = sessionDuration >= constantPlayThresholdMins || state.pickupsLastHour >= 5 || pickupsLastMinute >= 5;
-  if (state.isCharging && timeBucket === 'NIGHT' && isPlayingConstantly) {
+  const isChargingState = state.isDemoMode ? true : state.isCharging;
+  if (isChargingState && isNightBucket && isPlayingConstantly) {
     score += 25; // High stress index penalty
   }
 
