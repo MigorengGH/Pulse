@@ -23,8 +23,50 @@ const getContext = () => {
 `;
 };
 
+export const getLocalFallbackResponse = (userMessage: string, customTriggers?: string[]): string => {
+  const state = useAuraStore.getState();
+  const score = state.stressScore;
+  const lastAnalysis = state.lastAnalysis;
+  const triggers = customTriggers && customTriggers.length > 0 ? customTriggers : (lastAnalysis?.triggers || []);
+
+  const lowerMsg = userMessage.toLowerCase();
+
+  // Special keywords overrides
+  if (lowerMsg.includes('breath') || lowerMsg.includes('relax') || lowerMsg.includes('calm') || lowerMsg.includes('exercise')) {
+    return "Let's take a quick moment together. Inhale slowly for 4 seconds, hold for 4, exhale for 4, and hold for 4. Repeat this Box Breathing sequence to calm your nervous system.";
+  }
+
+  if (triggers.includes('Playing phone constantly while charging late at night (High Stress)')) {
+    return "I noticed you're active while charging late at night. Bedtime doomscrolling keeps your brain alert when it should be resting. Let's try putting the phone away and giving your mind some quiet rest.";
+  }
+
+  if (triggers.includes('Elevated checks rate (5+ pickups per min/hour) - Labeled as Stress') || triggers.includes('Rapid phone checking (restlessness)')) {
+    return "I see you've been checking your phone very frequently. Constant checking is often a subconscious response to digital anxiety or restlessness. Let's try a 5-minute screen-free break.";
+  }
+
+  if (triggers.includes('Late night scrolling while still (in-bed scrolling)')) {
+    return "You're still and scrolling late at night. Doomscrolling in bed is a common trigger for sleep disruption. Try placing your phone out of reach and taking a few slow, deep breaths.";
+  }
+
+  if (triggers.includes('Unusually long phone session (avoidance or flow)')) {
+    return "You've been on your screen for a continuous stretch. To prevent eye strain and fatigue, try looking at something 20 feet away for 20 seconds to reset your focus.";
+  }
+
+  if (triggers.includes('Multiple ignored notifications (withdrawal/avoidance)')) {
+    return "I noticed a build-up of unread notifications. Lock screen clutter can cause micro-anxiety. Consider muting non-essential notifications to lighten your cognitive load.";
+  }
+
+  if (score > 50) {
+    return `Your passive stress score is a bit elevated right now (${Math.round(score)}/100). Take a slow, deep breath, and consider doing the Box Breathing exercise in the Settings tab to center yourself.`;
+  }
+
+  return "I'm here with you. If you're feeling a bit of digital clutter or restlessness right now, try closing your eyes and taking three slow, deep breaths.";
+};
+
 export const getAuraChatResponse = async (history: { role: 'user' | 'model', parts: {text: string}[] }[], message: string) => {
-  if (!geminiKey) return "API key missing.";
+  if (!geminiKey) {
+    return getLocalFallbackResponse(message);
+  }
 
   const systemPrompt = `
 You are Pulse, a calm and empathetic AI wellness companion.
@@ -51,12 +93,17 @@ they ask for more.
     return result.response.text();
   } catch (e) {
     console.error("Gemini Chat Error", e);
-    return "I'm having a little trouble connecting right now, but I'm still here with you.";
+    return getLocalFallbackResponse(message);
   }
 };
 
 export const getInsight = async () => {
-  if (!geminiKey) return "Take a deep breath. You're doing okay.";
+  if (!geminiKey) {
+    const state = useAuraStore.getState();
+    if (state.stressScore > 50) return "Elevated stress detected. Consider taking a deep breath and stepping away from your screen.";
+    if (state.pickupsLastHour > 5) return "Checking your phone frequently can build micro-stress. Try taking a short pause.";
+    return "Your rhythm is your own. Take it one step at a time.";
+  }
 
   const state = useAuraStore.getState();
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
@@ -72,12 +119,21 @@ Be warm, non-judgmental, and insightful. Just one short sentence.
     const result = await model.generateContent(prompt);
     return result.response.text().trim().replace(/^"|"$/g, '');
   } catch (e) {
+    const fallbackState = useAuraStore.getState();
+    if (fallbackState.stressScore > 50) return "Elevated stress detected. Consider taking a deep breath and stepping away from your screen.";
+    if (fallbackState.pickupsLastHour > 5) return "Checking your phone frequently can build micro-stress. Try taking a short pause.";
     return "Your rhythm is your own. Take it one step at a time.";
   }
 };
 
 export const getNudgeContext = async () => {
-  if (!geminiKey) return "You've been quite active on your phone.";
+  if (!geminiKey) {
+    const state = useAuraStore.getState();
+    if (state.pickupsLastHour > 0) {
+      return `You've checked your phone ${state.pickupsLastHour} time${state.pickupsLastHour > 1 ? 's' : ''} in the last hour.`;
+    }
+    return "You've been quite active on your screen recently.";
+  }
 
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
   const prompt = `
@@ -91,12 +147,18 @@ Make it factual but gentle. E.g., "You've picked up your phone 12 times in the l
     const result = await model.generateContent(prompt);
     return result.response.text().trim().replace(/^"|"$/g, '');
   } catch (e) {
-    return "Your phone has been keeping you busy.";
+    const state = useAuraStore.getState();
+    if (state.pickupsLastHour > 0) {
+      return `You've checked your phone ${state.pickupsLastHour} time${state.pickupsLastHour > 1 ? 's' : ''} in the last hour.`;
+    }
+    return "You've been quite active on your screen recently.";
   }
 };
 
 export const generateNudge = async (triggers: string[], deviationScore: number): Promise<string> => {
-  if (!geminiKey) return "Hey, noticed some restlessness. Maybe a quick pause?";
+  if (!geminiKey) {
+    return getLocalFallbackResponse('', triggers);
+  }
 
   const state = useAuraStore.getState();
   const hour = new Date().getHours();
@@ -127,7 +189,7 @@ Respond with only the nudge message, nothing else.
     const result = await model.generateContent(prompt);
     return result.response.text().trim().replace(/^"|"$/g, '');
   } catch (e) {
-    return "Hey, noticed some restlessness. Maybe a quick pause?";
+    return getLocalFallbackResponse('', triggers);
   }
 };
 
