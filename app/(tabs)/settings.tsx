@@ -92,6 +92,10 @@ export default function SettingsScreen() {
       <Card>
         <Row label="Days collected" value={daysOfData.toString()} />
         <Divider />
+        <Row label="Pickups today" value={store.pickupsToday.toString()} />
+        <Divider />
+        <Row label="Pickups (last hour)" value={store.pickupsLastHour.toString()} />
+        <Divider />
         <View style={styles.row}>
           <Text style={styles.label}>Baseline</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
