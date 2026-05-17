@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, Animated, Dimensions } from 'react-native';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
+import { View, Text, ScrollView, Animated, Dimensions, Alert, TouchableOpacity } from 'react-native';
 import Orb from '../../components/Orb';
 import BaselineProgress from '../../components/BaselineProgress';
 import { useAuraStore } from '../../store/useAuraStore';
@@ -15,12 +15,93 @@ export default function Home() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
 
+  // Interceptor Overlay States
+  const [showTakeover, setShowTakeover] = useState(false);
+  const [takeoverTriggered, setTakeoverTriggered] = useState(false);
+
+  // Takeover Box Breathing States
+  const [breathState, setBreathState] = useState<'Inhale' | 'Hold In' | 'Exhale' | 'Hold Out'>('Inhale');
+  const [secondsLeft, setSecondsLeft] = useState(4);
+  const [breathsCompleted, setBreathsCompleted] = useState(0);
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  // Monitor stress triggers to automatically launch takeover simulation!
+  const lastAnalysis = state.lastAnalysis;
+  const triggers = lastAnalysis?.triggers || [];
+  const hasLateNightStress = triggers.includes('Playing phone constantly while charging late at night (High Stress)') || 
+                             triggers.includes('Late night scrolling while still (in-bed scrolling)');
+
+  useEffect(() => {
+    if (hasLateNightStress && !takeoverTriggered) {
+      setTakeoverTriggered(true);
+      setShowTakeover(true);
+    } else if (!hasLateNightStress) {
+      setTakeoverTriggered(false);
+    }
+  }, [hasLateNightStress]);
+
+  // Breathing Box Timer
+  useEffect(() => {
+    if (!showTakeover) {
+      setBreathState('Inhale');
+      setSecondsLeft(4);
+      setBreathsCompleted(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setSecondsLeft(prev => {
+        if (prev <= 1) {
+          setBreathState(curr => {
+            if (curr === 'Inhale') return 'Hold In';
+            if (curr === 'Hold In') return 'Exhale';
+            if (curr === 'Exhale') return 'Hold Out';
+            setBreathsCompleted(b => b + 1);
+            return 'Inhale';
+          });
+          return 4;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [showTakeover]);
+
+  // Dynamic Size & Colors for breathing circle
+  const circleSize = 
+    breathState === 'Inhale' ? 100 + (4 - secondsLeft) * 15 :
+    breathState === 'Hold In' ? 160 :
+    breathState === 'Exhale' ? 160 - (4 - secondsLeft) * 15 :
+    100;
+
+  const circleColor =
+    breathState === 'Inhale' ? '#2dd4bf' :
+    breathState === 'Hold In' ? '#3b82f6' :
+    breathState === 'Exhale' ? '#f43f5e' :
+    '#a855f7';
+
+  const handleCloseApp = () => {
+    state.setIsDemoMode(false);
+    useAuraStore.setState({
+      stressScore: 10,
+      isCharging: false,
+      currentSessionStart: null,
+      insomniaSignal: false,
+    });
+    setShowTakeover(false);
+    Alert.alert("Smart Choice! 💤", "Digital Timeout activated. Sleep well and recharge for tomorrow! 🌙");
+  };
+
+  const handleContinueAnyway = () => {
+    setShowTakeover(false);
+  };
 
   const label = useMemo(() => getStressLabel(state.stressScore), [state.stressScore]);
   const greeting = useMemo(() => getGreeting(), []);
@@ -205,6 +286,181 @@ export default function Home() {
 
         </Animated.View>
       </ScrollView>
+
+      {/* Absolute Takeover Interceptor Overlay (Instagram Taking Over Simulation) */}
+      {showTakeover && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1000,
+          backgroundColor: '#090D16',
+        }}>
+          {/* Faded Mock Instagram Feed */}
+          <View style={{ opacity: 0.12, flex: 1, paddingHorizontal: 20, paddingTop: 60 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: 'bold', fontFamily: 'serif' }}>Instagram</Text>
+              <View style={{ flexDirection: 'row', gap: 20 }}>
+                <Ionicons name="heart-outline" size={24} color="#FFFFFF" />
+                <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFFFFF" />
+              </View>
+            </View>
+            <View style={{ width: '100%', height: 280, backgroundColor: '#1E293B', borderRadius: 16, justifyContent: 'center', alignItems: 'center' }}>
+              <Ionicons name="image-outline" size={64} color="#334155" />
+            </View>
+            <Text style={{ color: '#FFFFFF', marginTop: 16, fontWeight: 'bold', fontFamily: 'PlusJakartaSans_700Bold' }}>insta_scroller_99</Text>
+            <Text style={{ color: '#94A3B8', marginTop: 6, fontFamily: 'PlusJakartaSans_400Regular' }}>Endless scrolling late at night...</Text>
+          </View>
+
+          {/* Intrusive Premium Intervention Card */}
+          <BlurView intensity={80} tint="dark" style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            padding: 24,
+          }}>
+            <View style={{ 
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              borderRadius: 32,
+              padding: 28,
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.5,
+              shadowRadius: 24,
+              elevation: 10,
+              alignItems: 'center',
+            }}>
+              {/* Alert Header */}
+              <View style={{ 
+                width: 56, 
+                height: 56, 
+                borderRadius: 28, 
+                backgroundColor: 'rgba(239, 68, 68, 0.15)', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: '#EF4444',
+                marginBottom: 16
+              }}>
+                <Ionicons name="shield-half" size={28} color="#EF4444" />
+              </View>
+              <Text style={{ color: '#FFFFFF', fontSize: 22, fontFamily: 'PlusJakartaSans_800ExtraBold', textAlign: 'center' }}>
+                Digital Intervention
+              </Text>
+              <Text style={{ color: '#EF4444', fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>
+                Late Night Scrolling
+              </Text>
+
+              {/* Dynamic Behavioral Feedback Comment */}
+              <Text style={{ 
+                color: '#CBD5E1', 
+                fontSize: 14, 
+                fontFamily: 'PlusJakartaSans_500Medium', 
+                textAlign: 'center', 
+                lineHeight: 22, 
+                marginTop: 16,
+                marginBottom: 12
+              }}>
+                "We noticed you've been surfing Instagram late at night while charging. Late-night screen stimulation suppresses melatonin and keeps your nervous system awake."
+              </Text>
+
+              {/* Animated Box Breathing Circle */}
+              <View style={{ alignItems: 'center', marginVertical: 20 }}>
+                <View style={{
+                  width: 170,
+                  height: 170,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {/* Glowing Animated Outer Ring */}
+                  <View style={{
+                    position: 'absolute',
+                    width: circleSize,
+                    height: circleSize,
+                    borderRadius: circleSize / 2,
+                    backgroundColor: circleColor,
+                    opacity: 0.12,
+                  }} />
+                  
+                  {/* Solid Interactive Core */}
+                  <View style={{
+                    width: circleSize - 24,
+                    height: circleSize - 24,
+                    borderRadius: (circleSize - 24) / 2,
+                    backgroundColor: circleColor,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    shadowColor: circleColor,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 10,
+                    elevation: 6,
+                  }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 15, fontFamily: 'PlusJakartaSans_800ExtraBold', textTransform: 'uppercase' }}>
+                      {breathState}
+                    </Text>
+                    <Text style={{ color: '#FFFFFF', fontSize: 20, fontFamily: 'PlusJakartaSans_800ExtraBold', marginTop: 2 }}>
+                      {secondsLeft}s
+                    </Text>
+                  </View>
+                </View>
+                
+                <Text style={{ color: '#94A3B8', fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 12 }}>
+                  {breathsCompleted > 0 
+                    ? `✓ Cycle Complete! Ready to reflect.` 
+                    : "Follow along to calm your nervous system..."}
+                </Text>
+              </View>
+
+              {/* Interactive Decisions */}
+              <View style={{ width: '100%', gap: 12, marginTop: 8 }}>
+                <TouchableOpacity
+                  onPress={handleCloseApp}
+                  style={{
+                    backgroundColor: Colors.accent,
+                    borderRadius: 16,
+                    paddingVertical: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    shadowColor: Colors.accent,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    Close Instagram & Go to Bed 🌙
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleContinueAnyway}
+                  style={{
+                    borderRadius: 16,
+                    paddingVertical: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                  }}
+                >
+                  <Text style={{ color: '#94A3B8', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                    Continue using Instagram anyway
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BlurView>
+        </View>
+      )}
     </View>
   );
 }
