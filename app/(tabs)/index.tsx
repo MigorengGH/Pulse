@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, getGreeting, getStressLabel, getStressColor } from '../../constants/colors';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Notifications from 'expo-notifications';
 
 import { useRouter } from 'expo-router';
 
@@ -21,6 +22,8 @@ export default function Home() {
   // Interceptor Overlay States
   const [showTakeover, setShowTakeover] = useState(false);
   const [takeoverTriggered, setTakeoverTriggered] = useState(false);
+  const [isSurfingInstagram, setIsSurfingInstagram] = useState(false);
+  const [surfingTimer, setSurfingTimer] = useState(0);
 
   // Takeover Box Breathing States
   const [breathState, setBreathState] = useState<'Inhale' | 'Hold In' | 'Exhale' | 'Hold Out'>('Inhale');
@@ -54,6 +57,47 @@ export default function Home() {
       setTakeoverTriggered(false);
     }
   }, [hasLateNightStress]);
+
+  // Instagram Surfing 10-Second Countdown & Notification Trigger
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isSurfingInstagram && !showTakeover) {
+      interval = setInterval(() => {
+        setSurfingTimer(prev => {
+          if (prev >= 9) {
+            // Trigger 10s intervention!
+            clearInterval(interval);
+            
+            // 1. Send push notification instantly!
+            Notifications.scheduleNotificationAsync({
+              content: {
+                title: "⚠️ Doomscroll Interception",
+                body: "You've been on Instagram for 10 seconds. Let's take a breathing break.",
+                sound: true,
+              },
+              trigger: null,
+            });
+            
+            // 2. Trigger stress baseline spike and full screen takeover!
+            useAuraStore.setState({
+              stressScore: 72,
+              lastAnalysis: {
+                score: 72,
+                deviationScore: 72,
+                triggers: ['Late night scrolling while still (in-bed scrolling)']
+              } as any
+            });
+            
+            setShowTakeover(true);
+            setTakeoverTriggered(true);
+            return 10;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isSurfingInstagram, showTakeover]);
 
   // Breathing Box Timer
   useEffect(() => {
@@ -149,6 +193,7 @@ export default function Home() {
   const handleCloseApp = () => {
     anxiousSwipesCountRef.current = 0;
     state.setIsDemoMode(false);
+    setIsSurfingInstagram(false);
     useAuraStore.setState({
       stressScore: 10,
       isCharging: false,
@@ -166,6 +211,7 @@ export default function Home() {
 
   const handleContinueAnyway = () => {
     anxiousSwipesCountRef.current = 0;
+    setIsSurfingInstagram(false);
     setShowTakeover(false);
   };
 
@@ -452,6 +498,32 @@ export default function Home() {
                     Take a Breathing Pause 🧘
                   </Text>
                 </TouchableOpacity>
+
+                {/* Instagram Surfing Simulator Button */}
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsSurfingInstagram(true);
+                    setSurfingTimer(0);
+                    setShowTakeover(false);
+                    setTakeoverTriggered(false);
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(244, 63, 94, 0.08)',
+                    borderRadius: 16,
+                    paddingVertical: 14,
+                    borderWidth: 1,
+                    borderColor: 'rgba(244, 63, 94, 0.25)',
+                    marginTop: 12,
+                  }}
+                >
+                  <Ionicons name="logo-instagram" size={18} color="#f43f5e" style={{ marginRight: 8 }} />
+                  <Text style={{ color: '#f43f5e', fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    Simulate Instagram Surfing 📱
+                  </Text>
+                </TouchableOpacity>
               </View>
             </GlassCard>
           </View>
@@ -471,6 +543,76 @@ export default function Home() {
 
         </Animated.View>
       </ScrollView>
+
+      {/* 📸 FULLSCREEN INSTAGRAM SURFING SIMULATOR */}
+      {isSurfingInstagram && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 900,
+          backgroundColor: '#000000',
+        }}>
+          {/* Faded Feed if takeover has fired; otherwise fully bright */}
+          <View style={{ opacity: showTakeover ? 0.12 : 1.0, flex: 1, paddingHorizontal: 20, paddingTop: 60 }}>
+            {/* Instagram Header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 25, fontWeight: 'bold', fontFamily: 'serif' }}>Instagram</Text>
+              
+              {/* Counting Badge to watch in real-time */}
+              {!showTakeover && (
+                <View style={{ backgroundColor: '#f43f5e', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 11, fontFamily: 'PlusJakartaSans_800ExtraBold' }}>
+                    SURFING: {surfingTimer}s / 10s
+                  </Text>
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', gap: 20 }}>
+                <Ionicons name="heart-outline" size={24} color="#FFFFFF" />
+                <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFFFFF" />
+              </View>
+            </View>
+
+            {/* Simulated scrollable posts */}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={{ marginBottom: 24 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#f43f5e', justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: 'bold' }}>JD</Text>
+                  </View>
+                  <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontFamily: 'PlusJakartaSans_700Bold' }}>mindful_explorer</Text>
+                </View>
+                <View style={{ width: '100%', height: 280, backgroundColor: '#1E293B', borderRadius: 16, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#334155' }}>
+                  <Ionicons name="image-outline" size={54} color="#475569" />
+                  <Text style={{ color: '#64748B', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 10 }}>Flicking through posts...</Text>
+                </View>
+                <Text style={{ color: '#FFFFFF', marginTop: 12, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' }}>
+                  Just relaxing and scrolling away... 🥱 #downtime #sleep
+                </Text>
+              </View>
+
+              <View style={{ marginBottom: 24 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#3b82f6', justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: 'bold' }}>AI</Text>
+                  </View>
+                  <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontFamily: 'PlusJakartaSans_700Bold' }}>dopamine_hooks</Text>
+                </View>
+                <View style={{ width: '100%', height: 280, backgroundColor: '#1E293B', borderRadius: 16, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#334155' }}>
+                  <Ionicons name="play-outline" size={54} color="#475569" />
+                  <Text style={{ color: '#64748B', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 10 }}>Auto-playing Reels...</Text>
+                </View>
+                <Text style={{ color: '#FFFFFF', marginTop: 12, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' }}>
+                  The algorithm always knows what you want. Just one more... 🌀
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      )}
 
       {/* Absolute Takeover Interceptor Overlay (Instagram Taking Over Simulation) */}
       {/* Absolute Takeover Interceptor Overlay */}
