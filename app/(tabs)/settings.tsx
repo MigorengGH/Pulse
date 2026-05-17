@@ -6,6 +6,7 @@ import { useAuraStore } from '../../store/useAuraStore';
 import { clearBaseline, savePreferences } from '../../lib/storage';
 import { activateDemoMode } from '../../utils/demoData';
 import { Colors } from '../../constants/colors';
+import BaselineProgress from '../../components/BaselineProgress';
 
 export default function SettingsScreen() {
   const store = useAuraStore();
@@ -100,6 +101,14 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </View>
+        {!baseline && (
+          <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+            <BaselineProgress daysCollected={daysOfData} />
+            <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 12 }}>
+              Collecting data to establish your unique digital rhythm.
+            </Text>
+          </View>
+        )}
         <Divider />
         <TouchableOpacity onPress={handleResetBaseline} style={styles.row}>
           <Text style={[styles.label, { color: Colors.high }]}>Reset baseline</Text>

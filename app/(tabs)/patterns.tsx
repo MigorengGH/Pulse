@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
+import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { BlurView } from 'expo-blur';
 import { useAuraStore } from '../../store/useAuraStore';
 import type { SignalEvent } from '../../types';
@@ -8,7 +8,6 @@ import { getInsight, generateWeeklyInsight } from '../../lib/GeminiClient';
 import { loadCachedInsight, saveInsight } from '../../lib/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
-import BaselineProgress from '../../components/BaselineProgress';
 
 function GlassCard({ children, style }: { children: React.ReactNode; style?: any }) {
   return (
@@ -107,49 +106,111 @@ export default function PatternsScreen() {
         contentContainerStyle={{ padding: 24, paddingTop: 64, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.headerText}>Journey</Text>
-        <Text style={styles.subHeaderText}>Your behavioral baselines & patterns</Text>
+        <Text style={styles.headerText}>Daily Rhythm</Text>
+        <Text style={styles.subHeaderText}>Comparing today to your 3-day baseline.</Text>
 
-        {/* Journey & Baselines */}
+        {/* Overall Flow Chart */}
         <GlassCard style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="flag" size={18} color={Colors.accent} />
-            </View>
-            <Text style={styles.sectionTitle}>Baseline Progression</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              Overall Flow
+            </Text>
+            <Ionicons name="water-outline" size={20} color={Colors.accent} />
           </View>
           
-          <BaselineProgress daysCollected={store.daysOfData} />
-          
-          <Text style={styles.baselineDescription}>
-            {store.baseline 
-              ? "Your baseline is fully established. Aura is now capable of detecting subtle behavioral shifts."
-              : `Collecting data to establish your unique digital rhythm. ${Math.max(0, 7 - store.daysOfData)} days remaining.`}
-          </Text>
-
-          <View style={styles.divider} />
-          
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{weekPickups}</Text>
-              <Text style={styles.statLabel}>Pickups (Week)</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>
-                {weekScreenTimeMins >= 60 ? `${Math.floor(weekScreenTimeMins / 60)}h ${weekScreenTimeMins % 60}m` : `${weekScreenTimeMins}m`}
-              </Text>
-              <Text style={styles.statLabel}>Screen Time</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{Math.round(weekPickups / 7)}</Text>
-              <Text style={styles.statLabel}>Daily Avg</Text>
-            </View>
+          <View style={{ height: 120, justifyContent: 'center', marginLeft: -10 }}>
+            <Text style={{ position: 'absolute', top: -5, left: '35%', color: Colors.accent, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, zIndex: 10 }}>Peak Flow</Text>
+            <LineChart
+              data={[{value: 20}, {value: 30}, {value: 45}, {value: 50}, {value: 45}, {value: 25}, {value: 20}, {value: 25}, {value: 30}]}
+              data2={[{value: 15}, {value: 15}, {value: 20}, {value: 30}, {value: 40}, {value: 45}, {value: 30}, {value: 15}, {value: 15}]}
+              curved
+              hideDataPoints
+              hideRules
+              hideYAxisText
+              hideAxesAndRules
+              thickness={5}
+              color={Colors.accent}
+              color2={Colors.textMuted}
+              strokeDashArray2={[5, 5]}
+              thickness2={4}
+              areaChart
+              startFillColor={Colors.accent}
+              endFillColor={'transparent'}
+              startOpacity={0.15}
+              endOpacity={0.0}
+              height={80}
+              adjustToWidth
+            />
+            <Text style={{ position: 'absolute', bottom: 5, right: 30, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, zIndex: 10 }}>Resting</Text>
           </View>
         </GlassCard>
 
-        {/* Signal Insights */}
-        <Text style={[styles.headerText, { fontSize: 24, marginTop: 12 }]}>Signal Insights</Text>
-        <Text style={styles.subHeaderText}>Analysis of your device interactions</Text>
+        {/* Quick Stats Row */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 16 }}>
+          <GlassCard style={{ flex: 1, padding: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="phone-portrait-outline" size={16} color={Colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1 }}>Pickups/hr</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8 }}>
+              <Text style={{ color: Colors.textPrimary, fontSize: 36, fontFamily: 'PlusJakartaSans_800ExtraBold', lineHeight: 40 }}>3.2</Text>
+              <Text style={{ color: Colors.accent, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', marginLeft: 6, marginBottom: 4 }}>-1.0</Text>
+            </View>
+            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>Gentler pace than usual today.</Text>
+          </GlassCard>
+
+          <GlassCard style={{ flex: 1, padding: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="phone-landscape-outline" size={16} color={Colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1 }}>Screen Time</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8 }}>
+              <Text style={{ color: Colors.textPrimary, fontSize: 36, fontFamily: 'PlusJakartaSans_800ExtraBold', lineHeight: 40 }}>2<Text style={{ fontSize: 24 }}>h</Text></Text>
+              <Text style={{ color: Colors.textMuted, fontSize: 16, fontFamily: 'PlusJakartaSans_500Medium', marginLeft: 4, marginBottom: 4 }}>15m</Text>
+            </View>
+            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>In rhythm with your baseline.</Text>
+          </GlassCard>
+        </View>
+
+        {/* Active Signals */}
+        <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, paddingHorizontal: 8 }}>
+          Active Signals
+        </Text>
+        <View style={[{
+          borderRadius: 24,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: Colors.bgBorder,
+          marginBottom: 32,
+        }]}>
+          <BlurView intensity={50} tint="light" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
+            {/* Stillness Item */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: Colors.bgBorder }}>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(45, 212, 191, 0.15)', alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
+                <Ionicons name="body" size={20} color={Colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 2 }}>Stillness</Text>
+                <Text style={{ color: Colors.accent, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>Active for 15 mins</Text>
+              </View>
+              <Ionicons name="cellular" size={24} color={Colors.accent} style={{ opacity: 0.6 }} />
+            </View>
+            
+            {/* Insomnia Signal Item */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bgBorder, alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
+                <Ionicons name="moon-outline" size={22} color={Colors.textMuted} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: Colors.textMuted, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 2 }}>Insomnia Signal</Text>
+                <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' }}>Resting steady</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Signal Insights (Usage Trends kept as requested) */}
 
         <GlassCard style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
