@@ -1,5 +1,6 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { View, Text } from 'react-native';
+import { useEffect } from 'react';
 import { useAuraStore } from '../../store/useAuraStore';
 import NudgeBanner from '../../components/NudgeBanner';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +8,14 @@ import { Colors } from '../../constants/colors';
 
 export default function TabLayout() {
   const showNudge = useAuraStore(state => state.showNudgeBanner);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (showNudge) {
+      // Automatically push/launch the full-screen Breathing takeover intervention!
+      router.push('/(modals)/nudge');
+    }
+  }, [showNudge]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>

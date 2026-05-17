@@ -444,6 +444,35 @@ export default function Home() {
                     Take a Breathing Pause 🧘
                   </Text>
                 </TouchableOpacity>
+
+                {/* Developer debug helper to test the intervention takeover */}
+                {__DEV__ && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      // Set stress score to 75% and trigger the breathing takeover!
+                      useAuraStore.setState({
+                        stressScore: 75,
+                        showNudgeBanner: true
+                      });
+                    }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                      borderRadius: 16,
+                      paddingVertical: 12,
+                      borderWidth: 1,
+                      borderColor: 'rgba(239, 68, 68, 0.15)',
+                      marginTop: 12,
+                    }}
+                  >
+                    <Ionicons name="warning-outline" size={18} color="#EF4444" style={{ marginRight: 8 }} />
+                    <Text style={{ color: '#EF4444', fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                      Test Stress Takeover Intervention
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </GlassCard>
           </View>
