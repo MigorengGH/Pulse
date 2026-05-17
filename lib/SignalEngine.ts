@@ -233,6 +233,24 @@ export const useSignalEngine = () => {
         saveSignals(newSignals);
         recomputeStress();
 
+        // Frantic Check Pattern Detection: 3+ pickups in less than a minute
+        const oneMinuteAgo = now - 60000;
+        const recentPickups = newSignals.filter(s => s.type === 'pickup' && s.timestamp >= oneMinuteAgo);
+        
+        if (recentPickups.length >= 3) {
+          console.log(`[Intervention] Frantic pickup pattern detected! (${recentPickups.length} pickups in the last minute)`);
+          store.setStressScore(78); // Push stress score to elevated so context is clear
+          useAuraStore.setState({
+            lastAnalysis: {
+              score: 78,
+              deviationScore: 78,
+              triggers: ['Frantic Check Pattern (3+ Pickups/Min)']
+            } as any
+          });
+          store.setLastNudgeTime(now);
+          store.setShowNudgeBanner(true); // Fire breathing takeover modal overlay instantly!
+        }
+
         // Rebuild baseline periodically
         await buildAndSaveBaseline();
       }
