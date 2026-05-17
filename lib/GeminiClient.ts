@@ -92,7 +92,7 @@ they ask for more.
     const result = await chat.sendMessage(message);
     return result.response.text();
   } catch (e) {
-    console.error("Gemini Chat Error", e);
+    console.warn("Gemini Chat Error (Falling back to local advisor)", e);
     return getLocalFallbackResponse(message);
   }
 };
