@@ -520,8 +520,8 @@ export default function PatternsScreen() {
         {/* AI Analysis */}
         <GlassCard style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-             <View style={[styles.iconContainer, { backgroundColor: 'rgba(244, 63, 94, 0.1)' }]}>
-              <Ionicons name="sparkles" size={18} color={Colors.high} />
+             <View style={[styles.iconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
+              <Ionicons name="sparkles" size={18} color="#8b5cf6" />
             </View>
             <Text style={styles.sectionTitle}>AI Analysis</Text>
           </View>
