@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, Dimensions, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuraStore } from '../store/useAuraStore';
 import { saveOnboardingComplete } from '../lib/storage';
 import { Colors } from '../constants/colors';
@@ -10,21 +11,21 @@ const { width } = Dimensions.get('window');
 const slides = [
   {
     id: '1',
-    icon: '🌊',
+    iconName: 'water-outline' as const,
     title: 'Pulse learns\nyour rhythm',
     body: 'No forms. No check-ins. Pulse quietly watches your phone patterns and learns what "normal" looks like for you.',
     accent: Colors.accent,
   },
   {
     id: '2',
-    icon: '🔔',
+    iconName: 'notifications-outline' as const,
     title: 'Catch stress\nbefore you feel it',
     body: 'When your behaviour shifts from your baseline, Pulse sends a gentle nudge. Not an alarm — just a quiet moment.',
     accent: Colors.calm,
   },
   {
     id: '3',
-    icon: '🔒',
+    iconName: 'lock-closed-outline' as const,
     title: 'Your data\nnever leaves',
     body: 'Pulse never reads messages or content. Only usage patterns — which apps, how long. Nothing more.',
     accent: '#8B5CF6',
@@ -80,7 +81,7 @@ export default function OnboardingScreen() {
               borderWidth: 1.5,
               borderColor: `${slide.accent}30`,
             }}>
-              <Text style={{ fontSize: 52 }}>{slide.icon}</Text>
+              <Ionicons name={slide.iconName} size={52} color={slide.accent} />
             </View>
 
             <Text style={{

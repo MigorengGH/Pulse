@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { View, Text } from 'react-native';
 import { useAuraStore } from '../../store/useAuraStore';
 import NudgeBanner from '../../components/NudgeBanner';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 
 export default function TabLayout() {
@@ -30,25 +31,45 @@ export default function TabLayout() {
           tabBarInactiveTintColor: Colors.tabInactive,
           tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: '600',
+            fontFamily: 'PlusJakartaSans_600SemiBold',
           },
         }}
       >
         <Tabs.Screen
           name="index"
-          options={{ title: 'Home', tabBarIcon: () => <Text style={{ fontSize: 22 }}>🏠</Text> }}
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
+            )
+          }}
         />
         <Tabs.Screen
           name="patterns"
-          options={{ title: 'Patterns', tabBarIcon: () => <Text style={{ fontSize: 22 }}>📊</Text> }}
+          options={{
+            title: 'Patterns',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={22} color={color} />
+            )
+          }}
         />
         <Tabs.Screen
           name="chat"
-          options={{ title: 'Pulse', tabBarIcon: () => <Text style={{ fontSize: 22 }}>💬</Text> }}
+          options={{
+            title: 'Pulse',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "chatbubble" : "chatbubble-outline"} size={22} color={color} />
+            )
+          }}
         />
         <Tabs.Screen
           name="settings"
-          options={{ title: 'Settings', tabBarIcon: () => <Text style={{ fontSize: 22 }}>⚙️</Text> }}
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "settings" : "settings-outline"} size={22} color={color} />
+            )
+          }}
         />
       </Tabs>
     </View>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 
 interface BaselineProgressProps {
@@ -25,9 +26,17 @@ export default function BaselineProgress({ daysCollected, daysRequired = 3 }: Ba
       elevation: 2,
     }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Text style={{ color: Colors.textPrimary, fontSize: 14, fontWeight: '600' }}>
-          {isComplete ? '✨ Baseline ready' : '🧠 Learning your patterns'}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons 
+            name={isComplete ? "sparkles-outline" : "analytics-outline"} 
+            size={18} 
+            color={isComplete ? Colors.calm : Colors.accent} 
+            style={{ marginRight: 8 }} 
+          />
+          <Text style={{ color: Colors.textPrimary, fontSize: 14, fontWeight: '600' }}>
+            {isComplete ? 'Baseline ready' : 'Learning your patterns'}
+          </Text>
+        </View>
         <Text style={{ color: isComplete ? Colors.calm : Colors.accent, fontSize: 13, fontWeight: '700' }}>
           {isComplete ? 'Done' : `Day ${daysCollected} / ${daysRequired}`}
         </Text>

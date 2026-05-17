@@ -3,10 +3,25 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { useSignalEngine } from '../lib/SignalEngine';
 import { loadOnboardingComplete } from '../lib/storage';
 import { useAuraStore } from '../store/useAuraStore';
+import {
+  useFonts,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import '../global.css';
 
 export default function RootLayout() {
   useSignalEngine();
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
   const [isReady, setIsReady] = useState(false);
   const onboardingComplete = useAuraStore(s => s.onboardingComplete);
   const setOnboardingComplete = useAuraStore(s => s.setOnboardingComplete);
@@ -38,8 +53,8 @@ export default function RootLayout() {
     }
   }, [isReady, onboardingComplete, segments]);
 
-  // Show nothing until we know the onboarding state
-  if (!isReady) return null;
+  // Show nothing until we know the onboarding state and fonts are ready
+  if (!isReady || !fontsLoaded) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

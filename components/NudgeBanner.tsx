@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 
 export default function NudgeBanner() {
@@ -25,11 +26,14 @@ export default function NudgeBanner() {
       shadowRadius: 10,
       elevation: 3,
     }}>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: Colors.textPrimary, fontWeight: '700', fontSize: 14, marginBottom: 2 }}>
-          💙 Noticed some restlessness
-        </Text>
-        <Text style={{ color: Colors.textMuted, fontSize: 12 }}>Want to take a breath?</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        <Ionicons name="sparkles" size={20} color={Colors.accent} style={{ marginRight: 10 }} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: Colors.textPrimary, fontWeight: '700', fontSize: 14, marginBottom: 2 }}>
+            Noticed some restlessness
+          </Text>
+          <Text style={{ color: Colors.textMuted, fontSize: 12 }}>Want to take a breath?</Text>
+        </View>
       </View>
       <TouchableOpacity
         style={{

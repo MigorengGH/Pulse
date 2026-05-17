@@ -1,10 +1,15 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, Animated } from 'react-native';
+import { View, Text, ScrollView, Animated, Dimensions } from 'react-native';
 import Orb from '../../components/Orb';
 import DeviationRing from '../../components/DeviationRing';
 import BaselineProgress from '../../components/BaselineProgress';
 import { useAuraStore } from '../../store/useAuraStore';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, getGreeting, getStressLabel, getStressColor } from '../../constants/colors';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 export default function Home() {
   const state = useAuraStore();
@@ -13,8 +18,8 @@ export default function Home() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 700, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -41,155 +46,195 @@ export default function Home() {
     : null;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors.bg }}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+    <View style={{ flex: 1, backgroundColor: Colors.bg }}>
+      {/* Background Mesh Gradient Simulation */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+        <LinearGradient
+          colors={['#f8fafc', '#e2e8f0', '#f8fafc']}
+          style={{ flex: 1 }}
+        />
+        <Animated.View style={{
+          position: 'absolute',
+          top: '10%',
+          right: '-20%',
+          width: width * 0.8,
+          height: width * 0.8,
+          borderRadius: width * 0.4,
+          backgroundColor: stressColor,
+          opacity: 0.15,
+          transform: [{ scale: 1.5 }],
+        }} />
+      </View>
 
-        {/* Header */}
-        <View style={{ paddingHorizontal: 24, paddingTop: 64, paddingBottom: 8 }}>
-          <Text style={{ color: Colors.textMuted, fontSize: 14, fontWeight: '500', marginBottom: 4 }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </Text>
-          <Text style={{ color: Colors.textPrimary, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>
-            {greeting} 👋
-          </Text>
-        </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
-        {/* Status Card */}
-        <View style={{
-          marginHorizontal: 16,
-          marginTop: 20,
-          backgroundColor: Colors.bgCard,
-          borderRadius: 24,
-          padding: 28,
-          alignItems: 'center',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 12,
-          elevation: 3,
-        }}>
-          {state.baseline ? (
-            <>
-              <DeviationRing score={state.deviationScore || state.stressScore} size={160} strokeWidth={8} />
-              <Text style={{ color: Colors.textPrimary, fontSize: 20, fontWeight: '700', marginTop: 16 }}>
-                {label}
-              </Text>
-              <Text style={{ color: Colors.textMuted, fontSize: 13, marginTop: 4 }}>
-                Based on your personal baseline
-              </Text>
-            </>
-          ) : (
-            <>
-              <Orb stressScore={state.stressScore} />
-              <Text style={{ color: Colors.textPrimary, fontSize: 20, fontWeight: '700', marginTop: 16 }}>
-                {label}
-              </Text>
-              <Text style={{ color: Colors.textMuted, fontSize: 13, marginTop: 4 }}>
-                Pulse observes passively — no check-ins
-              </Text>
-            </>
-          )}
-        </View>
-
-        {/* Stats Row */}
-        <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 16, gap: 10 }}>
-          <StatCard icon="📱" label="Pickups" value={state.pickupsToday.toString()} />
-          <StatCard icon="⏱️" label="Screen time" value={totalScreenTime} />
-          <StatCard icon="🌙" label="Sleep" value={state.insomniaSignal ? 'Late' : 'Good'} />
-        </View>
-
-        {/* Baseline Progress */}
-        {!state.baseline && (
-          <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
-            <BaselineProgress daysCollected={state.daysOfData} />
-          </View>
-        )}
-
-        {/* Last Nudge */}
-        {lastNudge && (
-          <View style={{
-            marginHorizontal: 16,
-            marginTop: 16,
-            backgroundColor: Colors.bgCard,
-            borderRadius: 20,
-            padding: 20,
-            borderLeftWidth: 3,
-            borderLeftColor: Colors.accent,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 8,
-            elevation: 2,
-          }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ color: Colors.accent, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Last nudge
-              </Text>
-              <Text style={{ color: Colors.textMuted, fontSize: 12 }}>{lastNudgeAge}</Text>
-            </View>
-            <Text style={{ color: Colors.textSecondary, fontSize: 15, lineHeight: 22 }}>
-              {lastNudge.message}
+          {/* Header */}
+          <View style={{ paddingHorizontal: 24, paddingTop: 70, paddingBottom: 8 }}>
+            <Text style={{ 
+              color: Colors.textMuted, 
+              fontSize: 12, 
+              fontFamily: 'PlusJakartaSans_600SemiBold', 
+              textTransform: 'uppercase',
+              letterSpacing: 1.5,
+              marginBottom: 6 
+            }}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </Text>
+            <Text style={{ 
+              color: Colors.textPrimary, 
+              fontSize: 32, 
+              fontFamily: 'PlusJakartaSans_800ExtraBold', 
+              letterSpacing: -0.5 
+            }}>
+              {greeting}
             </Text>
           </View>
-        )}
 
-        {/* Active Signals */}
-        {state.lastAnalysis && state.lastAnalysis.triggers.length > 0 && (
-          <View style={{
-            marginHorizontal: 16,
-            marginTop: 16,
-            backgroundColor: Colors.bgCard,
-            borderRadius: 20,
-            padding: 20,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 8,
-            elevation: 2,
-          }}>
-            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-              Active signals
-            </Text>
-            {state.lastAnalysis.triggers.map((trigger, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.elevated, marginRight: 10 }} />
-                <Text style={{ color: Colors.textSecondary, fontSize: 14 }}>{trigger}</Text>
+          {/* Main Status Area */}
+          <View style={{ alignItems: 'center', marginTop: 10 }}>
+            {state.baseline ? (
+              <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+                <DeviationRing score={state.deviationScore || state.stressScore} size={280} strokeWidth={4} />
+                <View style={{ position: 'absolute', alignItems: 'center' }}>
+                   <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Current State
+                  </Text>
+                  <Text style={{ color: Colors.textPrimary, fontSize: 28, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4 }}>
+                    {label}
+                  </Text>
+                </View>
               </View>
-            ))}
+            ) : (
+              <View style={{ paddingVertical: 20 }}>
+                <Orb stressScore={state.stressScore} />
+                <View style={{ alignItems: 'center', marginTop: 20 }}>
+                   <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Aura Pulse
+                  </Text>
+                  <Text style={{ color: Colors.textPrimary, fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4 }}>
+                    {label}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
-        )}
 
-        {/* Footer note */}
-        <Text style={{ color: Colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: 24, paddingHorizontal: 40, lineHeight: 18 }}>
-          Pulse monitors passively in the background. Your data never leaves your device.
-        </Text>
+          {/* Stats Row */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: 24, marginTop: 32, gap: 12 }}>
+            <StatCard iconName="phone-portrait-outline" label="Pickups" value={state.pickupsToday.toString()} />
+            <StatCard iconName="time-outline" label="Focus" value={totalScreenTime} />
+            <StatCard iconName="moon-outline" label="Rest" value={state.insomniaSignal ? 'Late' : 'Steady'} />
+          </View>
 
-      </Animated.View>
-    </ScrollView>
-  );
-}
+          {/* Baseline Progress */}
+          {!state.baseline && (
+            <View style={{ paddingHorizontal: 24, marginTop: 24 }}>
+               <GlassCard style={{ padding: 24 }}>
+                <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 12 }}>
+                  Baseline Collection
+                </Text>
+                <BaselineProgress daysCollected={state.daysOfData} />
+                <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_400Regular', marginTop: 12, lineHeight: 18 }}>
+                  Aura is learning your unique behavioral patterns. Your baseline will be ready in {Math.max(0, 7 - state.daysOfData)} days.
+                </Text>
+              </GlassCard>
+            </View>
+          )}
 
-function StatCard({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <View style={{
-      flex: 1,
-      backgroundColor: Colors.bgCard,
-      borderRadius: 18,
-      padding: 16,
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 6,
-      elevation: 2,
-    }}>
-      <Text style={{ fontSize: 20, marginBottom: 6 }}>{icon}</Text>
-      <Text style={{ color: Colors.textPrimary, fontSize: 17, fontWeight: '800' }}>{value}</Text>
-      <Text style={{ color: Colors.textMuted, fontSize: 11, marginTop: 2, textAlign: 'center' }}>{label}</Text>
+          {/* Last Nudge / Insights */}
+          <View style={{ paddingHorizontal: 24, marginTop: 24 }}>
+            <GlassCard style={{ padding: 24 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={{ color: Colors.accent, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                  AI COMPANION
+                </Text>
+                {lastNudgeAge && <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium' }}>{lastNudgeAge}</Text>}
+              </View>
+              
+              <Text style={{ color: Colors.textPrimary, fontSize: 17, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 26, marginBottom: 16 }}>
+                {lastNudge ? lastNudge.message : "Aura is currently observing your digital rhythm to provide contextual mindfulness nudges."}
+              </Text>
+
+              {state.lastAnalysis && state.lastAnalysis.triggers.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {state.lastAnalysis.triggers.map((trigger, i) => (
+                    <View key={i} style={{ 
+                      backgroundColor: 'rgba(0,0,0,0.05)', 
+                      paddingHorizontal: 12, 
+                      paddingVertical: 6, 
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: 'rgba(0,0,0,0.08)'
+                    }}>
+                      <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                        {trigger}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </GlassCard>
+          </View>
+
+          {/* Privacy Note */}
+          <Text style={{ 
+            color: Colors.textMuted, 
+            fontSize: 12, 
+            fontFamily: 'PlusJakartaSans_400Regular',
+            textAlign: 'center', 
+            marginTop: 32, 
+            paddingHorizontal: 48, 
+            lineHeight: 20 
+          }}>
+            Your behavioral patterns are processed locally using on-device intelligence.
+          </Text>
+
+        </Animated.View>
+      </ScrollView>
     </View>
   );
 }
+
+function GlassCard({ children, style }: { children: React.ReactNode; style?: any }) {
+  return (
+    <View style={[{
+      borderRadius: 24,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: Colors.bgBorder,
+    }, style]}>
+      <BlurView intensity={40} tint="light" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+      <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.4)' }}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function StatCard({ iconName, label, value }: { iconName: keyof typeof Ionicons.glyphMap; label: string; value: string }) {
+  return (
+    <GlassCard style={{ flex: 1 }}>
+      <View style={{ padding: 20, alignItems: 'center' }}>
+        <View style={{ 
+          width: 40, 
+          height: 40, 
+          borderRadius: 12, 
+          backgroundColor: 'rgba(45, 212, 191, 0.15)', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          marginBottom: 12
+        }}>
+          <Ionicons name={iconName} size={20} color={Colors.accent} />
+        </View>
+        <Text style={{ color: Colors.textPrimary, fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold' }}>{value}</Text>
+        <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 4, textTransform: 'uppercase' }}>{label}</Text>
+      </View>
+    </GlassCard>
+  );
+}
+

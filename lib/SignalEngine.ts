@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import * as Battery from 'expo-battery';
+import * as Notifications from 'expo-notifications';
 import { Accelerometer } from 'expo-sensors';
 import { useAuraStore } from '../store/useAuraStore';
 import type { SignalEvent } from '../types';
@@ -13,8 +14,18 @@ export const useSignalEngine = () => {
   const store = useAuraStore();
   const appState = useRef(AppState.currentState);
   const stillStartTime = useRef<number | null>(null);
+  const demoTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    Notifications.requestPermissionsAsync();
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+
     // Load all persisted state on startup
     const init = async () => {
       const signals = await loadSignals();
@@ -88,6 +99,8 @@ export const useSignalEngine = () => {
     store.setAppIsActive(isNowActive);
 
     if (wasBackground && isNowActive) {
+      if (demoTimeout.current) clearTimeout(demoTimeout.current);
+
       // Pickup event
       const pickupSignal: SignalEvent = { timestamp: now, type: 'pickup' };
       store.addSignal(pickupSignal);
@@ -102,6 +115,20 @@ export const useSignalEngine = () => {
       await buildAndSaveBaseline();
     } else if (!isNowActive && appState.current === 'active') {
       // Backgrounding
+      if (__DEV__) {
+        demoTimeout.current = setTimeout(async () => {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Mindful Moment",
+              body: "Noticed some restlessness. Tap here to take a breath.",
+              sound: true,
+            },
+            trigger: null,
+          });
+          store.setShowNudgeBanner(true);
+        }, 5000);
+      }
+
       const start = store.currentSessionStart;
       if (start) {
         const duration = now - start;

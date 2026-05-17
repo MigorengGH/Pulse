@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuraStore } from '../../store/useAuraStore';
@@ -81,8 +81,8 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: Colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 64 }}>
-      <Text style={{ color: Colors.textPrimary, fontSize: 30, fontWeight: '800', marginBottom: 28, letterSpacing: -0.5 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: Colors.bg }} contentContainerStyle={{ padding: 24, paddingTop: 64 }}>
+      <Text style={{ color: Colors.textPrimary, fontSize: 32, fontFamily: 'PlusJakartaSans_800ExtraBold', marginBottom: 28, letterSpacing: -0.5 }}>
         Settings
       </Text>
 
@@ -91,27 +91,27 @@ export default function SettingsScreen() {
       <Card>
         <Row label="Days collected" value={daysOfData.toString()} />
         <Divider />
-        <View style={rowStyle}>
-          <Text style={labelStyle}>Baseline</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>Baseline</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, marginRight: 6, backgroundColor: baseline ? Colors.calm : Colors.textMuted }} />
-            <Text style={{ color: baseline ? Colors.calm : Colors.textMuted, fontSize: 14, fontWeight: '600' }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, marginRight: 8, backgroundColor: baseline ? Colors.calm : Colors.textMuted }} />
+            <Text style={{ color: baseline ? Colors.calm : Colors.textMuted, fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
               {baseline ? 'Active' : 'Learning...'}
             </Text>
           </View>
         </View>
         <Divider />
-        <TouchableOpacity onPress={handleResetBaseline} style={rowStyle}>
-          <Text style={[labelStyle, { color: Colors.high }]}>Reset baseline</Text>
-          <Text style={{ color: Colors.textMuted }}>›</Text>
+        <TouchableOpacity onPress={handleResetBaseline} style={styles.row}>
+          <Text style={[styles.label, { color: Colors.high }]}>Reset baseline</Text>
+          <Text style={{ color: Colors.textMuted, fontFamily: 'PlusJakartaSans_500Medium' }}>›</Text>
         </TouchableOpacity>
       </Card>
 
       {/* Nudge Preferences */}
       <SectionLabel>Nudges</SectionLabel>
       <Card>
-        <View style={rowStyle}>
-          <Text style={labelStyle}>Enable nudges</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>Enable nudges</Text>
           <Switch
             value={nudgesEnabled}
             onValueChange={handleToggleNudges}
@@ -120,10 +120,10 @@ export default function SettingsScreen() {
           />
         </View>
         <Divider />
-        <View style={rowStyle}>
+        <View style={styles.row}>
           <View style={{ flex: 1 }}>
-            <Text style={labelStyle}>Late night mode</Text>
-            <Text style={{ color: Colors.textMuted, fontSize: 12, marginTop: 2 }}>Extra sensitive after 11 PM</Text>
+            <Text style={styles.label}>Late night mode</Text>
+            <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>Extra sensitive after 11 PM</Text>
           </View>
           <Switch
             value={lateNightMode}
@@ -139,20 +139,20 @@ export default function SettingsScreen() {
       {/* About */}
       <SectionLabel>About</SectionLabel>
       <Card>
-        <Text style={{ color: Colors.textSecondary, fontSize: 14, lineHeight: 22, padding: 16 }}>
+        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 22, padding: 20 }}>
           Pulse does not diagnose or replace professional mental health support. If you're in crisis, please reach out to a professional.
         </Text>
         <Divider />
-        <TouchableOpacity onPress={handleVersionTap} style={rowStyle} activeOpacity={1}>
-          <Text style={labelStyle}>Version</Text>
-          <Text style={{ color: Colors.textMuted, fontSize: 14 }}>1.0.0</Text>
+        <TouchableOpacity onPress={handleVersionTap} style={styles.row} activeOpacity={1}>
+          <Text style={styles.label}>Version</Text>
+          <Text style={{ color: Colors.textMuted, fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold' }}>1.0.0</Text>
         </TouchableOpacity>
         {__DEV__ && (
           <>
             <Divider />
-            <TouchableOpacity onPress={handleResetOnboarding} style={rowStyle}>
-              <Text style={[labelStyle, { color: Colors.elevated }]}>Reset onboarding</Text>
-              <Text style={{ color: Colors.textMuted }}>›</Text>
+            <TouchableOpacity onPress={handleResetOnboarding} style={styles.row}>
+              <Text style={[styles.label, { color: Colors.elevated }]}>Reset onboarding</Text>
+              <Text style={{ color: Colors.textMuted, fontFamily: 'PlusJakartaSans_500Medium' }}>›</Text>
             </TouchableOpacity>
           </>
         )}
@@ -169,7 +169,7 @@ export default function SettingsScreen() {
             borderColor: Colors.accent,
             borderStyle: 'dashed',
             padding: 18,
-            borderRadius: 16,
+            borderRadius: 20,
             alignItems: 'center',
             marginBottom: 16,
             opacity: demoLoading ? 0.6 : 1,
@@ -178,12 +178,12 @@ export default function SettingsScreen() {
           {demoLoading ? (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <ActivityIndicator color={Colors.accent} size="small" />
-              <Text style={{ color: Colors.accent, fontWeight: '700', marginLeft: 10 }}>Activating...</Text>
+              <Text style={{ color: Colors.accent, fontFamily: 'PlusJakartaSans_700Bold', marginLeft: 10 }}>Activating...</Text>
             </View>
           ) : (
             <>
-              <Text style={{ color: Colors.accent, fontWeight: '800', fontSize: 16 }}>🎯 Demo Mode</Text>
-              <Text style={{ color: Colors.textMuted, fontSize: 12, marginTop: 4 }}>7-day mock data + AI nudge</Text>
+              <Text style={{ color: Colors.accent, fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 16 }}>🎯 Demo Mode</Text>
+              <Text style={{ color: Colors.textDark, fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, marginTop: 6 }}>7-day mock data + AI nudge</Text>
             </>
           )}
         </TouchableOpacity>
@@ -196,7 +196,7 @@ export default function SettingsScreen() {
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <Text style={{ color: Colors.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, marginTop: 4, paddingHorizontal: 4 }}>
+    <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, marginTop: 8, paddingHorizontal: 4 }}>
       {children}
     </Text>
   );
@@ -204,7 +204,7 @@ function SectionLabel({ children }: { children: string }) {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, marginBottom: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 24, marginBottom: 28, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: Colors.bgBorder }}>
       {children}
     </View>
   );
@@ -212,16 +212,27 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <View style={rowStyle}>
-      <Text style={labelStyle}>{label}</Text>
-      <Text style={{ color: Colors.textMuted, fontSize: 14, fontWeight: '500' }}>{value}</Text>
+    <View style={styles.row}>
+      <Text style={styles.label}>{label}</Text>
+      <Text style={{ color: Colors.textMuted, fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold' }}>{value}</Text>
     </View>
   );
 }
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: Colors.bgBorder, marginHorizontal: 16 }} />;
+  return <View style={{ height: 1, backgroundColor: Colors.bgBorder }} />;
 }
 
-const rowStyle = { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const, padding: 16 };
-const labelStyle = { color: Colors.textPrimary, fontSize: 15 } as const;
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+  },
+  label: {
+    color: Colors.textPrimary,
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+});
