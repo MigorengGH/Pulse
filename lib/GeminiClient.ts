@@ -133,32 +133,36 @@ they ask for more.
   }
 };
 
-export const getInsight = async () => {
+export const getInsight = async (): Promise<string> => {
+  const state = useAuraStore.getState();
+  const score = state.stressScore;
+  const triggers = state.lastAnalysis?.triggers || [];
+
   if (!geminiKey) {
-    const state = useAuraStore.getState();
-    if (state.stressScore > 50) return "Elevated stress detected. Consider taking a deep breath and stepping away from your screen.";
-    if (state.pickupsLastHour > 5) return "Checking your phone frequently can build micro-stress. Try taking a short pause.";
-    return "Your rhythm is your own. Take it one step at a time.";
+    if (triggers.length > 0) {
+      return `We noticed a few behavioral indicators today: ${triggers.join(', ')}. Consider taking a brief Box Breathing pause to reset.`;
+    }
+    return "Your digital rhythm looks healthy and calm today. Keep practicing balanced screen habits!";
   }
 
-  const state = useAuraStore.getState();
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
   const prompt = `
-Generate a single sentence of compassionate behavioural insight based on these recent signals:
-- Pickups today: ${state.pickupsToday}
-- Stress Score: ${state.stressScore}/100
-- Insomnia Signal: ${state.insomniaSignal}
-Be warm, non-judgmental, and insightful. Just one short sentence.
+Generate a warm, friendly, 2-sentence mindfulness observation for the user's dashboard today.
+
+Their current state:
+- Stress score: ${Math.round(score)}/100
+- Active triggers detected: ${triggers.join(', ') || 'None (Healthy Baseline)'}
+- Phone pickups today: ${state.pickupsToday}
+
+Write a natural, empathetic observation. Do not use clinical terms, and do not mention specific scores or numbers. Offer one quick, actionable mindful tip.
+Respond with only the insight, nothing else.
 `;
 
   try {
     const result = await model.generateContent(prompt);
     return result.response.text().trim().replace(/^"|"$/g, '');
   } catch (e) {
-    const fallbackState = useAuraStore.getState();
-    if (fallbackState.stressScore > 50) return "Elevated stress detected. Consider taking a deep breath and stepping away from your screen.";
-    if (fallbackState.pickupsLastHour > 5) return "Checking your phone frequently can build micro-stress. Try taking a short pause.";
-    return "Your rhythm is your own. Take it one step at a time.";
+    return "Your digital rhythm looks healthy and calm today. Keep practicing balanced screen habits!";
   }
 };
 

@@ -93,6 +93,35 @@ export default function PatternsScreen() {
     return { value: mins, label: days[d.getDay()], frontColor: color };
   }), [store.signals]);
 
+  // Dynamic Live Statistics
+  const pickupsRate = useMemo(() => {
+    const hours = Math.max(1, new Date().getHours());
+    const avg = store.pickupsToday / hours;
+    return avg > 0 ? avg.toFixed(1) : "0.0";
+  }, [store.pickupsToday]);
+
+  const pickupsDiff = useMemo(() => {
+    const diff = store.pickupsLastHour - 3; // Baseline reference compared to calm state
+    return diff >= 0 ? `+${diff}` : `${diff}`;
+  }, [store.pickupsLastHour]);
+
+  const totalScreenTime = useMemo(() => {
+    const today = new Date().setHours(0, 0, 0, 0);
+    const sessions = store.signals.filter(s => s.type === 'session' && s.timestamp > today && s.durationMs);
+    let totalMs = sessions.reduce((a, s) => a + (s.durationMs || 0), 0);
+
+    if (store.currentSessionStart) {
+      totalMs += Date.now() - store.currentSessionStart;
+    }
+
+    const secs = Math.round(totalMs / 1000);
+    const mins = Math.floor(secs / 60);
+    if (store.isDemoMode && secs < 60) {
+      return `${secs}s`;
+    }
+    return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+  }, [store.signals, store.currentSessionStart, store.isDemoMode]);
+
   // Weekly stats
   const weekAgo = Date.now() - 7 * 86400000;
   const weekSignals = store.signals.filter(s => s.timestamp >= weekAgo);
@@ -109,7 +138,136 @@ export default function PatternsScreen() {
         <Text style={styles.headerText}>Daily Rhythm</Text>
         <Text style={styles.subHeaderText}>Comparing today to your 3-day baseline.</Text>
 
-        {/* Overall Flow Chart */}
+        {/* Usage Trends Chart (MOVED UP) */}
+        <GlassCard style={{ marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.iconContainer, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
+                <Ionicons name="analytics" size={18} color={Colors.elevated} />
+              </View>
+              <Text style={styles.sectionTitle}>Usage Trends</Text>
+            </View>
+            <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: Colors.textMuted }}>LAST 7 DAYS</Text>
+          </View>
+
+          <BarChart
+            data={chartData}
+            barWidth={22}
+            spacing={16}
+            roundedTop
+            hideRules
+            xAxisThickness={0}
+            yAxisThickness={0}
+            yAxisTextStyle={{ color: Colors.textMuted, fontSize: 10, fontFamily: 'PlusJakartaSans_500Medium' }}
+            xAxisLabelTextStyle={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' }}
+            noOfSections={3}
+            maxValue={Math.max(...chartData.map(d => d.value), 100)}
+            initialSpacing={4}
+            isAnimated
+          />
+          
+          <View style={styles.legendContainer}>
+            <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: Colors.calm }]} /><Text style={styles.legendText}>Calm</Text></View>
+            <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: Colors.elevated }]} /><Text style={styles.legendText}>Elevated</Text></View>
+            <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: Colors.high }]} /><Text style={styles.legendText}>High</Text></View>
+          </View>
+        </GlassCard>
+
+        {/* Quick Stats Row (LIVE & DYNAMIC) */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 16 }}>
+          <GlassCard style={{ flex: 1, padding: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="phone-portrait-outline" size={16} color={Colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1 }}>Pickups/hr</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8 }}>
+              <Text style={{ color: Colors.textPrimary, fontSize: 36, fontFamily: 'PlusJakartaSans_800ExtraBold', lineHeight: 40 }}>{pickupsRate}</Text>
+              <Text style={{ color: pickupsDiff.startsWith('+') ? Colors.high : Colors.accent, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', marginLeft: 6, marginBottom: 4 }}>{pickupsDiff}</Text>
+            </View>
+            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>
+              {parseFloat(pickupsRate) > 4 ? "Elevated device check rate." : "Gentler pace than usual today."}
+            </Text>
+          </GlassCard>
+
+          <GlassCard style={{ flex: 1, padding: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="time-outline" size={16} color={Colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1 }}>Screen Time</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8 }}>
+              <Text style={{ color: Colors.textPrimary, fontSize: 32, fontFamily: 'PlusJakartaSans_800ExtraBold', lineHeight: 40 }}>{totalScreenTime}</Text>
+            </View>
+            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>In rhythm with your baseline.</Text>
+          </GlassCard>
+        </View>
+
+        {/* Active Signals (LIVE & DYNAMIC) */}
+        <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, paddingHorizontal: 8 }}>
+          Active Signals
+        </Text>
+        <View style={[{
+          borderRadius: 24,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: Colors.bgBorder,
+          marginBottom: 32,
+        }]}>
+          <BlurView intensity={50} tint="light" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
+            {/* Stillness Item */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: Colors.bgBorder }}>
+              <View style={{ 
+                width: 44, 
+                height: 44, 
+                borderRadius: 22, 
+                backgroundColor: store.movementState === 'still' ? 'rgba(45, 212, 191, 0.15)' : 'rgba(99, 102, 241, 0.15)', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                marginRight: 16 
+              }}>
+                <Ionicons 
+                  name={store.movementState === 'still' ? "bed-outline" : "walk-outline"} 
+                  size={20} 
+                  color={store.movementState === 'still' ? Colors.accent : '#6366f1'} 
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 2 }}>Stillness Tracker</Text>
+                <Text style={{ color: store.movementState === 'still' ? Colors.accent : '#6366f1', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                  {store.movementState === 'still' ? 'Complete Stillness (In Bed)' : 'Physical Movement Detected'}
+                </Text>
+              </View>
+              <Ionicons name="cellular" size={24} color={Colors.accent} style={{ opacity: 0.6 }} />
+            </View>
+            
+            {/* Insomnia Signal Item */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20 }}>
+              <View style={{ 
+                width: 44, 
+                height: 44, 
+                borderRadius: 22, 
+                backgroundColor: store.insomniaSignal ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0,0,0,0.04)', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                marginRight: 16 
+              }}>
+                <Ionicons 
+                  name={store.insomniaSignal ? "warning-outline" : "moon-outline"} 
+                  size={22} 
+                  color={store.insomniaSignal ? '#EF4444' : Colors.textMuted} 
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: store.insomniaSignal ? Colors.high : Colors.textMuted, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 2 }}>Insomnia Signal</Text>
+                <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' }}>
+                  {store.insomniaSignal ? '⚠️ Sleep cycle disrupted' : 'Resting steady and quiet'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Overall Flow Chart (MOVED DOWN) */}
         <GlassCard style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
@@ -145,107 +303,7 @@ export default function PatternsScreen() {
           </View>
         </GlassCard>
 
-        {/* Quick Stats Row */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 16 }}>
-          <GlassCard style={{ flex: 1, padding: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <Ionicons name="phone-portrait-outline" size={16} color={Colors.textSecondary} style={{ marginRight: 6 }} />
-              <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1 }}>Pickups/hr</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8 }}>
-              <Text style={{ color: Colors.textPrimary, fontSize: 36, fontFamily: 'PlusJakartaSans_800ExtraBold', lineHeight: 40 }}>3.2</Text>
-              <Text style={{ color: Colors.accent, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', marginLeft: 6, marginBottom: 4 }}>-1.0</Text>
-            </View>
-            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>Gentler pace than usual today.</Text>
-          </GlassCard>
-
-          <GlassCard style={{ flex: 1, padding: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <Ionicons name="phone-landscape-outline" size={16} color={Colors.textSecondary} style={{ marginRight: 6 }} />
-              <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1 }}>Screen Time</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8 }}>
-              <Text style={{ color: Colors.textPrimary, fontSize: 36, fontFamily: 'PlusJakartaSans_800ExtraBold', lineHeight: 40 }}>2<Text style={{ fontSize: 24 }}>h</Text></Text>
-              <Text style={{ color: Colors.textMuted, fontSize: 16, fontFamily: 'PlusJakartaSans_500Medium', marginLeft: 4, marginBottom: 4 }}>15m</Text>
-            </View>
-            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>In rhythm with your baseline.</Text>
-          </GlassCard>
-        </View>
-
-        {/* Active Signals */}
-        <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, paddingHorizontal: 8 }}>
-          Active Signals
-        </Text>
-        <View style={[{
-          borderRadius: 24,
-          overflow: 'hidden',
-          borderWidth: 1,
-          borderColor: Colors.bgBorder,
-          marginBottom: 32,
-        }]}>
-          <BlurView intensity={50} tint="light" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
-            {/* Stillness Item */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: Colors.bgBorder }}>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(45, 212, 191, 0.15)', alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
-                <Ionicons name="body" size={20} color={Colors.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 2 }}>Stillness</Text>
-                <Text style={{ color: Colors.accent, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>Active for 15 mins</Text>
-              </View>
-              <Ionicons name="cellular" size={24} color={Colors.accent} style={{ opacity: 0.6 }} />
-            </View>
-            
-            {/* Insomnia Signal Item */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20 }}>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bgBorder, alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
-                <Ionicons name="moon-outline" size={22} color={Colors.textMuted} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: Colors.textMuted, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 2 }}>Insomnia Signal</Text>
-                <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' }}>Resting steady</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Signal Insights (Usage Trends kept as requested) */}
-
-        <GlassCard style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={[styles.iconContainer, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
-                <Ionicons name="analytics" size={18} color={Colors.elevated} />
-              </View>
-              <Text style={styles.sectionTitle}>Usage Trends</Text>
-            </View>
-            <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: Colors.textMuted }}>LAST 7 DAYS</Text>
-          </View>
-
-          <BarChart
-            data={chartData}
-            barWidth={22}
-            spacing={16}
-            roundedTop
-            hideRules
-            xAxisThickness={0}
-            yAxisThickness={0}
-            yAxisTextStyle={{ color: Colors.textMuted, fontSize: 10, fontFamily: 'PlusJakartaSans_500Medium' }}
-            xAxisLabelTextStyle={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' }}
-            noOfSections={3}
-            maxValue={Math.max(...chartData.map(d => d.value), 100)}
-            initialSpacing={4}
-            isAnimated
-          />
-          
-          <View style={styles.legendContainer}>
-            <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: Colors.calm }]} /><Text style={styles.legendText}>Calm</Text></View>
-            <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: Colors.elevated }]} /><Text style={styles.legendText}>Elevated</Text></View>
-            <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: Colors.high }]} /><Text style={styles.legendText}>High</Text></View>
-          </View>
-        </GlassCard>
-
+        {/* AI Analysis */}
         <GlassCard style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
              <View style={[styles.iconContainer, { backgroundColor: 'rgba(244, 63, 94, 0.1)' }]}>
@@ -269,6 +327,7 @@ export default function PatternsScreen() {
           )}
         </GlassCard>
 
+        {/* Weekly Reflection */}
         <GlassCard style={{ marginBottom: 32 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
             <View style={[styles.iconContainer, { backgroundColor: 'rgba(45, 212, 191, 0.15)' }]}>
