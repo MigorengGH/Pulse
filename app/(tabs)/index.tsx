@@ -201,6 +201,17 @@ export default function Home() {
       })()
     : null;
 
+  // Dynamic card statuses linked to stress score percentage
+  const pickupsStatus = state.pickupsLastHour >= 5 ? "Agitated" : state.pickupsLastHour > 2 ? "Active" : "Stable";
+  const pickupsColor = state.pickupsLastHour >= 5 ? Colors.high : state.pickupsLastHour > 2 ? Colors.elevated : Colors.calm;
+
+  const focusStatus = state.stressScore > 55 ? "Diffused" : state.stressScore < 35 ? "Optimal" : "Steady";
+  const focusColor = state.stressScore > 55 ? Colors.high : state.stressScore < 35 ? Colors.calm : Colors.accent;
+
+  const restValue = state.insomniaSignal ? "Disrupted" : "Steady";
+  const restStatus = state.stressScore > 55 ? "Restless" : "Restorative";
+  const restColor = state.stressScore > 55 ? Colors.high : Colors.calm;
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
       {/* Background Mesh Gradient Simulation */}
@@ -259,9 +270,9 @@ export default function Home() {
 
           {/* Stats Row */}
           <View style={{ flexDirection: 'row', paddingHorizontal: 24, marginTop: 32, gap: 12 }}>
-            <StatCard iconName="phone-portrait-outline" label="Total Pickups" value={state.pickupsToday.toString()} />
-            <StatCard iconName="time-outline" label="Focus" value={totalScreenTime} />
-            <StatCard iconName="moon-outline" label="Rest" value={state.insomniaSignal ? 'Late' : 'Steady'} />
+            <StatCard iconName="phone-portrait-outline" label="Total Pickups" value={state.pickupsToday.toString()} status={pickupsStatus} accentColor={pickupsColor} />
+            <StatCard iconName="time-outline" label="Focus" value={totalScreenTime} status={focusStatus} accentColor={focusColor} />
+            <StatCard iconName="moon-outline" label="Rest" value={restValue} status={restStatus} accentColor={restColor} />
           </View>
 
           {/* Device Status Bar */}
@@ -284,9 +295,6 @@ export default function Home() {
               </View>
             </GlassCard>
           </View>
-
-          {/* Late-Night Digital Habits App Usage Breakdown */}
-          <AppUsageBreakdown />
 
           {/* Baseline Progress */}
           {!state.baseline && (
@@ -444,35 +452,6 @@ export default function Home() {
                     Take a Breathing Pause 🧘
                   </Text>
                 </TouchableOpacity>
-
-                {/* Developer debug helper to test the intervention takeover */}
-                {__DEV__ && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      // Set stress score to 75% and trigger the breathing takeover!
-                      useAuraStore.setState({
-                        stressScore: 75,
-                        showNudgeBanner: true
-                      });
-                    }}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                      borderRadius: 16,
-                      paddingVertical: 12,
-                      borderWidth: 1,
-                      borderColor: 'rgba(239, 68, 68, 0.15)',
-                      marginTop: 12,
-                    }}
-                  >
-                    <Ionicons name="warning-outline" size={18} color="#EF4444" style={{ marginRight: 8 }} />
-                    <Text style={{ color: '#EF4444', fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold' }}>
-                      Test Stress Takeover Intervention
-                    </Text>
-                  </TouchableOpacity>
-                )}
               </View>
             </GlassCard>
           </View>
@@ -861,118 +840,49 @@ function GlassCard({ children, style }: { children: React.ReactNode; style?: any
   );
 }
 
-function StatCard({ iconName, label, value }: { iconName: keyof typeof Ionicons.glyphMap; label: string; value: string }) {
+function StatCard({ 
+  iconName, 
+  label, 
+  value, 
+  status, 
+  accentColor = Colors.accent 
+}: { 
+  iconName: keyof typeof Ionicons.glyphMap; 
+  label: string; 
+  value: string; 
+  status?: string; 
+  accentColor?: string 
+}) {
   return (
     <GlassCard style={{ flex: 1 }}>
-      <View style={{ padding: 20, alignItems: 'center' }}>
+      <View style={{ padding: 16, alignItems: 'center' }}>
         <View style={{ 
-          width: 40, 
-          height: 40, 
-          borderRadius: 12, 
-          backgroundColor: 'rgba(45, 212, 191, 0.15)', 
+          width: 36, 
+          height: 36, 
+          borderRadius: 10, 
+          backgroundColor: `${accentColor}15`, // soft 8% opacity background matching the status color
           alignItems: 'center', 
           justifyContent: 'center',
-          marginBottom: 12
+          marginBottom: 8
         }}>
-          <Ionicons name={iconName} size={20} color={Colors.accent} />
+          <Ionicons name={iconName} size={18} color={accentColor} />
         </View>
-        <Text style={{ color: Colors.textPrimary, fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold' }}>{value}</Text>
-        <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 4, textTransform: 'uppercase' }}>{label}</Text>
+        <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_800ExtraBold', textAlign: 'center' }}>{value}</Text>
+        <Text style={{ color: Colors.textMuted, fontSize: 9, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4, textTransform: 'uppercase', textAlign: 'center' }}>{label}</Text>
+        {status && (
+          <Text style={{ 
+            color: accentColor, 
+            fontSize: 10, 
+            fontFamily: 'PlusJakartaSans_800ExtraBold', 
+            marginTop: 4,
+            textTransform: 'uppercase',
+            textAlign: 'center'
+          }}>
+            {status}
+          </Text>
+        )}
       </View>
     </GlassCard>
-  );
-}
-
-function AppUsageBreakdown() {
-  const usageData = [
-    { 
-      name: 'TikTok', 
-      time: '1h 45m', 
-      percentage: 50, 
-      color: '#00f2fe', // Tiktok Cyan
-      icon: 'logo-tiktok' as const,
-      disruption: 'High Dopamine Hook'
-    },
-    { 
-      name: 'Instagram', 
-      time: '1h 12m', 
-      percentage: 34, 
-      color: '#f43f5e', // Instagram Sunset Pink
-      icon: 'logo-instagram' as const,
-      disruption: 'Social FOMO scroll'
-    },
-    { 
-      name: 'Twitter (X)', 
-      time: '35m', 
-      percentage: 16, 
-      color: '#64748b', // Slate Gray
-      icon: 'logo-twitter' as const,
-      disruption: 'Information Alertness'
-    }
-  ];
-
-  return (
-    <View style={{ paddingHorizontal: 24, marginTop: 24 }}>
-      <GlassCard>
-        <View style={{ padding: 24 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <View>
-              <Text style={{ color: Colors.accent, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                Late-Night Screen Habits
-              </Text>
-              <Text style={{ color: Colors.textPrimary, fontSize: 18, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4 }}>
-                Active Disruptor Breakdown
-              </Text>
-            </View>
-            <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)' }}>
-              <Text style={{ color: '#EF4444', fontSize: 10, fontFamily: 'PlusJakartaSans_700Bold' }}>🚨 SLEEP RISK</Text>
-            </View>
-          </View>
-
-          <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_400Regular', lineHeight: 20, marginBottom: 20 }}>
-            Apps with the highest usage between 11:00 PM and 4:00 AM over the last 7 days:
-          </Text>
-
-          <View style={{ gap: 18 }}>
-            {usageData.map((app, i) => (
-              <View key={i}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.04)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Ionicons name={app.icon} size={18} color={app.color} />
-                    </View>
-                    <View>
-                      <Text style={{ color: Colors.textPrimary, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>{app.name}</Text>
-                      <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium' }}>{app.disruption}</Text>
-                    </View>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ color: Colors.textPrimary, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>{app.time}</Text>
-                    <Text style={{ color: Colors.accent, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' }}>{app.percentage}% of bedtime</Text>
-                  </View>
-                </View>
-
-                {/* Progress Bar Container */}
-                <View style={{ width: '100%', height: 6, backgroundColor: Colors.bg, borderRadius: 4, overflow: 'hidden' }}>
-                  <View style={{ width: `${app.percentage}%`, height: '100%', backgroundColor: app.color, borderRadius: 4 }} />
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* AI Disruptor Insight */}
-          <View style={{ marginTop: 24, padding: 16, backgroundColor: 'rgba(45, 212, 191, 0.08)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(45, 212, 191, 0.15)' }}>
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-              <Ionicons name="sparkles" size={14} color={Colors.accent} />
-              <Text style={{ color: Colors.accent, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold' }}>AURA SLEEP INSIGHT</Text>
-            </View>
-            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>
-              TikTok scrolling represents 50% of your late-night usage. The fast-paced dopamine hooks delay sleep onset by an average of 48 minutes, keeping your brain alert.
-            </Text>
-          </View>
-        </View>
-      </GlassCard>
-    </View>
   );
 }
 

@@ -433,39 +433,87 @@ export default function PatternsScreen() {
           </View>
         </View>
 
-        {/* Overall Flow Chart (MOVED DOWN) */}
+        {/* Late-Night Digital Habits / Screen Habits Card */}
         <GlassCard style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              Overall Flow
-            </Text>
-            <Ionicons name="water-outline" size={20} color={Colors.accent} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View>
+              <Text style={{ color: Colors.accent, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                Late-Night Screen Habits
+              </Text>
+              <Text style={{ color: Colors.textPrimary, fontSize: 18, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4 }}>
+                Active Disruptor Breakdown
+              </Text>
+            </View>
+            <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+              <Text style={{ color: '#EF4444', fontSize: 10, fontFamily: 'PlusJakartaSans_700Bold' }}>🚨 SLEEP RISK</Text>
+            </View>
           </View>
-          
-          <View style={{ height: 120, justifyContent: 'center', marginLeft: -10 }}>
-            <Text style={{ position: 'absolute', top: -5, left: '35%', color: Colors.accent, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, zIndex: 10 }}>Peak Flow</Text>
-            <LineChart
-              data={[{value: 20}, {value: 30}, {value: 45}, {value: 50}, {value: 45}, {value: 25}, {value: 20}, {value: 25}, {value: 30}]}
-              data2={[{value: 15}, {value: 15}, {value: 20}, {value: 30}, {value: 40}, {value: 45}, {value: 30}, {value: 15}, {value: 15}]}
-              curved
-              hideDataPoints
-              hideRules
-              hideYAxisText
-              hideAxesAndRules
-              thickness={5}
-              color={Colors.accent}
-              color2={Colors.textMuted}
-              strokeDashArray2={[5, 5]}
-              thickness2={4}
-              areaChart
-              startFillColor={Colors.accent}
-              endFillColor={'transparent'}
-              startOpacity={0.15}
-              endOpacity={0.0}
-              height={80}
-              adjustToWidth
-            />
-            <Text style={{ position: 'absolute', bottom: 5, right: 30, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, zIndex: 10 }}>Resting</Text>
+
+          <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_400Regular', lineHeight: 20, marginBottom: 20 }}>
+            Apps with the highest usage between 11:00 PM and 4:00 AM over the last 7 days:
+          </Text>
+
+          <View style={{ gap: 18 }}>
+            {[
+              { 
+                name: 'TikTok', 
+                time: '1h 45m', 
+                percentage: 50, 
+                color: '#00f2fe', // Tiktok Cyan
+                icon: 'logo-tiktok' as const,
+                disruption: 'High Dopamine Hook'
+              },
+              { 
+                name: 'Instagram', 
+                time: '1h 12m', 
+                percentage: 34, 
+                color: '#f43f5e', // Instagram Sunset Pink
+                icon: 'logo-instagram' as const,
+                disruption: 'Social FOMO scroll'
+              },
+              { 
+                name: 'Twitter (X)', 
+                time: '35m', 
+                percentage: 16, 
+                color: '#64748b', // Slate Gray
+                icon: 'logo-twitter' as const,
+                disruption: 'Information Alertness'
+              }
+            ].map((app, i) => (
+              <View key={i}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.04)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name={app.icon} size={18} color={app.color} />
+                    </View>
+                    <View>
+                      <Text style={{ color: Colors.textPrimary, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>{app.name}</Text>
+                      <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium' }}>{app.disruption}</Text>
+                    </View>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ color: Colors.textPrimary, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>{app.time}</Text>
+                    <Text style={{ color: Colors.accent, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' }}>{app.percentage}% of bedtime</Text>
+                  </View>
+                </View>
+
+                {/* Progress Bar Container */}
+                <View style={{ width: '100%', height: 6, backgroundColor: Colors.bg, borderRadius: 4, overflow: 'hidden' }}>
+                  <View style={{ width: `${app.percentage}%`, height: '100%', backgroundColor: app.color, borderRadius: 4 }} />
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* AI Disruptor Insight */}
+          <View style={{ marginTop: 24, padding: 16, backgroundColor: 'rgba(45, 212, 191, 0.08)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(45, 212, 191, 0.15)' }}>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+              <Ionicons name="sparkles" size={14} color={Colors.accent} />
+              <Text style={{ color: Colors.accent, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold' }}>AURA SLEEP INSIGHT</Text>
+            </View>
+            <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 18 }}>
+              TikTok scrolling represents 50% of your late-night usage. The fast-paced dopamine hooks delay sleep onset by an average of 48 minutes, keeping your brain alert.
+            </Text>
           </View>
         </GlassCard>
 
