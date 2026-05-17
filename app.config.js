@@ -1,6 +1,6 @@
 module.exports = {
   name: "Pulse",
-  slug: "aura",
+  slug: "pulse",
   owner: "haidar1234",
   scheme: "pulse",
   version: "1.0.0",
@@ -41,7 +41,7 @@ module.exports = {
   extra: {
     geminiKey: process.env.EXPO_PUBLIC_GEMINI_KEY || "",
     eas: {
-      projectId: "2d8b157c-5060-463c-9b6e-ad755d405677"
+      projectId: "04a9f28e-1ad2-47d2-9301-ee6d01504ed4"
     }
   }
 };
