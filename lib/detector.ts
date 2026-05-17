@@ -92,7 +92,9 @@ export const analyzeCurrentState = async (): Promise<AnalysisResult> => {
   }
 
   // 8. Still and scrolling late at night (in-bed scrolling) (+15)
-  if (timeBucket === 'NIGHT' && state.movementState === 'still') {
+  const isNightBucket = state.isDemoMode ? true : (timeBucket === 'NIGHT');
+  const isMovementStill = state.isDemoMode ? true : (state.movementState === 'still');
+  if (isNightBucket && isMovementStill) {
     score += 15;
     triggers.push('Late night scrolling while still (in-bed scrolling)');
   }
@@ -105,14 +107,15 @@ export const analyzeCurrentState = async (): Promise<AnalysisResult> => {
 
   // 10. Charging late night and playing phone constantly (+20)
   const hourNum = new Date(now).getHours();
-  const isLateNightHour = hourNum >= 23 || hourNum < 5;
+  const isLateNightHour = state.isDemoMode ? true : (hourNum >= 23 || hourNum < 5);
   let curSessionMins = 0;
   if (state.currentSessionStart) {
     curSessionMins = (now - state.currentSessionStart) / (1000 * 60);
   }
   const constantPlayThresholdMins = state.isDemoMode ? (15 / 60) : 15; // 15 seconds in demo mode, 15 minutes in real life
   const playingConstantly = curSessionMins >= constantPlayThresholdMins || state.pickupsLastHour >= 5 || pickupsLastMinute >= 5;
-  if (state.isCharging && isLateNightHour && playingConstantly) {
+  const isChargingState = state.isDemoMode ? true : state.isCharging;
+  if (isChargingState && isLateNightHour && playingConstantly) {
     score += 20;
     triggers.push('Playing phone constantly while charging late at night (High Stress)');
   }

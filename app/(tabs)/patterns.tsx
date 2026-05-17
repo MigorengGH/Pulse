@@ -5,7 +5,8 @@ import { BlurView } from 'expo-blur';
 import { useAuraStore } from '../../store/useAuraStore';
 import type { SignalEvent } from '../../types';
 import { getInsight, generateWeeklyInsight } from '../../lib/GeminiClient';
-import { loadCachedInsight, saveInsight } from '../../lib/storage';
+import { loadCachedInsight, saveInsight, saveSignals } from '../../lib/storage';
+import { buildAndSaveBaseline } from '../../lib/baseline';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 
@@ -56,7 +57,7 @@ export default function PatternsScreen() {
     setIsLoadingWeekly(false);
   };
 
-  const loadDemoData = () => {
+  const loadDemoData = async () => {
     const now = Date.now();
     const dayMs = 24 * 60 * 60 * 1000;
     const demoSignals: SignalEvent[] = [];
@@ -81,6 +82,10 @@ export default function PatternsScreen() {
 
     store.setSignals(demoSignals);
     store.setDaysOfData(7);
+    
+    // Save these signals to disk and force build the baseline!
+    await saveSignals(demoSignals);
+    await buildAndSaveBaseline();
     
     // Inject active triggers into store so dashboard reflects the newly loaded signals
     useAuraStore.setState({
