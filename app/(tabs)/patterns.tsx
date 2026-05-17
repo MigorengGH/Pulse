@@ -4,8 +4,8 @@ import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { BlurView } from 'expo-blur';
 import { useAuraStore } from '../../store/useAuraStore';
 import type { SignalEvent } from '../../types';
-import { getInsight, generateWeeklyInsight } from '../../lib/GeminiClient';
-import { loadCachedInsight, saveInsight, saveSignals, loadSignals, loadBaseline, saveBaseline } from '../../lib/storage';
+import { generateWeeklyInsight } from '../../lib/GeminiClient';
+import { saveSignals, loadSignals, loadBaseline, saveBaseline } from '../../lib/storage';
 import { buildAndSaveBaseline } from '../../lib/baseline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,22 +34,8 @@ function GlassCard({ children, style }: { children: React.ReactNode; style?: any
 
 export default function PatternsScreen() {
   const store = useAuraStore();
-  const [insight, setInsight] = useState<string>('Analyzing your unique behavioral patterns...');
   const [weeklyInsight, setWeeklyInsight] = useState<string | null>(null);
   const [isLoadingWeekly, setIsLoadingWeekly] = useState(false);
-
-  useEffect(() => {
-    const fetchInsight = async () => {
-      const cached = await loadCachedInsight();
-      if (cached) setInsight(cached);
-      else {
-        const text = await getInsight();
-        setInsight(text);
-        saveInsight(text);
-      }
-    };
-    fetchInsight();
-  }, [store.signals]);
 
   const handleRefreshWeekly = async () => {
     setIsLoadingWeekly(true);
@@ -123,14 +109,6 @@ export default function PatternsScreen() {
       } as any
     });
 
-    // Automatically trigger a refresh on AI Analysis
-    const fetchNewInsight = async () => {
-      const text = await getInsight();
-      setInsight(text);
-      saveInsight(text);
-    };
-    fetchNewInsight();
-
     Alert.alert(
       "Demo Week Loaded! 📊",
       "7 days of realistic screen activity, frantic late-night scroll patterns, and sleep-cycle disruptions have been loaded. You are now in persistent Demo Mode!"
@@ -178,10 +156,7 @@ export default function PatternsScreen() {
         } as any
       });
 
-      // 6. Refresh AI Analysis and Weekly Reflection back to normal
-      const text = await getInsight();
-      setInsight(text);
-      saveInsight(text);
+      // 6. Reset Weekly Reflection back to normal
       setWeeklyInsight(null);
 
       // 7. Clean up backup keys
@@ -256,6 +231,38 @@ export default function PatternsScreen() {
       ),
     };
   }, [store.signals]);
+
+  // Dynamic AI Analysis Percentages
+  const sleepRiskPercent = useMemo(() => {
+    let base = 12;
+    if (store.insomniaSignal) base += 58;
+    if (store.isCharging) {
+      const hr = new Date().getHours();
+      if (hr >= 23 || hr < 5) base += 25;
+    }
+    return Math.min(100, base);
+  }, [store.insomniaSignal, store.isCharging]);
+
+  const restlessnessPercent = useMemo(() => {
+    let base = 15;
+    const pickups = store.pickupsLastHour;
+    if (pickups > 8) base += 55;
+    else if (pickups > 5) base += 35;
+    else if (pickups > 2) base += 15;
+    
+    if (store.stressScore > 65) base += 25;
+    else if (store.stressScore > 45) base += 15;
+    return Math.min(100, base);
+  }, [store.pickupsLastHour, store.stressScore]);
+
+  const calmRecoveryPercent = useMemo(() => {
+    let base = 85;
+    if (store.stressScore > 65) base -= 45;
+    else if (store.stressScore > 45) base -= 25;
+    
+    if (store.movementState === 'still') base += 15;
+    return Math.max(0, Math.min(100, base));
+  }, [store.stressScore, store.movementState]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
@@ -519,17 +526,107 @@ export default function PatternsScreen() {
 
         {/* AI Analysis */}
         <GlassCard style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
              <View style={[styles.iconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
               <Ionicons name="sparkles" size={18} color="#8b5cf6" />
             </View>
-            <Text style={styles.sectionTitle}>AI Analysis</Text>
+            <View>
+              <Text style={styles.sectionTitle}>Biometric Stress Factors</Text>
+              <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 2 }}>AI correlation of real-time signals</Text>
+            </View>
           </View>
-          <Text style={styles.insightText}>{insight}</Text>
+
+          {/* AI Analysis Badges Grid */}
+          <View style={{ gap: 16, marginBottom: 8 }}>
+            {[
+              {
+                title: "Sleep Disruption Risk",
+                percentage: sleepRiskPercent,
+                icon: "moon-outline",
+                color: sleepRiskPercent > 60 ? Colors.high : sleepRiskPercent > 30 ? Colors.elevated : Colors.calm,
+                status: sleepRiskPercent > 60 ? "Critical" : sleepRiskPercent > 30 ? "Moderate" : "Optimal",
+                desc: "Measures late-night screen activity and charging alignment."
+              },
+              {
+                title: "Cognitive Restlessness",
+                percentage: restlessnessPercent,
+                icon: "pulse-outline",
+                color: restlessnessPercent > 60 ? Colors.high : restlessnessPercent > 30 ? Colors.elevated : Colors.calm,
+                status: restlessnessPercent > 60 ? "Frantic" : restlessnessPercent > 30 ? "Agitated" : "Resting",
+                desc: "Measures frantic swipe intervals and hourly pickup velocity."
+              },
+              {
+                title: "Calm Recovery Rate",
+                percentage: calmRecoveryPercent,
+                icon: "heart-outline",
+                color: calmRecoveryPercent > 70 ? Colors.calm : calmRecoveryPercent > 40 ? Colors.elevated : Colors.high,
+                status: calmRecoveryPercent > 70 ? "Excellent" : calmRecoveryPercent > 40 ? "Steady" : "Tense",
+                desc: "Evaluates physical stillness state against stress peaks."
+              }
+            ].map((item, idx) => (
+              <View 
+                key={idx} 
+                style={{ 
+                  flexDirection: 'row', 
+                  alignItems: 'center', 
+                  backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+                  borderRadius: 16, 
+                  padding: 16, 
+                  borderWidth: 1, 
+                  borderColor: 'rgba(0, 0, 0, 0.03)' 
+                }}
+              >
+                {/* Icon Wrapper */}
+                <View 
+                  style={{ 
+                    width: 40, 
+                    height: 40, 
+                    borderRadius: 12, 
+                    backgroundColor: `${item.color}12`, 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    marginRight: 14
+                  }}
+                >
+                  <Ionicons name={item.icon as any} size={18} color={item.color} />
+                </View>
+
+                {/* Content */}
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <Text style={{ color: Colors.textPrimary, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                      {item.title}
+                    </Text>
+                    {/* Status Badge */}
+                    <View style={{ backgroundColor: `${item.color}15`, paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 6 }}>
+                      <Text style={{ color: item.color, fontSize: 8, fontFamily: 'PlusJakartaSans_800ExtraBold', textTransform: 'uppercase' }}>
+                        {item.status}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 14 }}>
+                    {item.desc}
+                  </Text>
+                  
+                  {/* Mini Progress Bar */}
+                  <View style={{ width: '100%', height: 4, backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: 2, marginTop: 8, overflow: 'hidden' }}>
+                    <View style={{ width: `${item.percentage}%`, height: '100%', backgroundColor: item.color, borderRadius: 2 }} />
+                  </View>
+                </View>
+
+                {/* Percentage Text */}
+                <View style={{ alignItems: 'flex-end', justifyContent: 'center', minWidth: 46 }}>
+                  <Text style={{ color: Colors.textPrimary, fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold' }}>
+                    {item.percentage}%
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
 
           {store.lastAnalysis && store.lastAnalysis.triggers.length > 0 && (
-            <View style={{ marginTop: 20 }}>
-              <Text style={styles.triggerLabel}>DETECTED TRIGGERS:</Text>
+            <View style={{ marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0, 0, 0, 0.05)' }}>
+              <Text style={styles.triggerLabel}>DETECTED BEHAVIORAL TRIGGERS:</Text>
               <View style={styles.triggerContainer}>
                 {store.lastAnalysis.triggers.map((trigger, i) => (
                   <View key={i} style={styles.triggerBadge}>
