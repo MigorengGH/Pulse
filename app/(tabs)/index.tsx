@@ -34,8 +34,14 @@ export default function Home() {
   // Monitor stress triggers to automatically launch takeover simulation!
   const lastAnalysis = state.lastAnalysis;
   const triggers = lastAnalysis?.triggers || [];
+  const isErraticSwipe = triggers.includes('Erratic/Anxious Swipe Pattern (Restlessness)');
   const hasLateNightStress = triggers.includes('Playing phone constantly while charging late at night (High Stress)') || 
-                             triggers.includes('Late night scrolling while still (in-bed scrolling)');
+                             triggers.includes('Late night scrolling while still (in-bed scrolling)') ||
+                             (isErraticSwipe && state.stressScore >= 65);
+
+  const takeoverComment = isErraticSwipe
+    ? "We detected a frantic, rapid swipe pattern on your screen. Erratic scroll flicking is a direct biometric signature of high anxiety and nervous restlessness."
+    : "We noticed you've been surfing Instagram late at night while charging. Late-night screen stimulation suppresses melatonin and keeps your nervous system awake.";
 
   useEffect(() => {
     if (hasLateNightStress && !takeoverTriggered) {
@@ -87,19 +93,76 @@ export default function Home() {
     breathState === 'Exhale' ? '#f43f5e' :
     '#a855f7';
 
+  // Frantic Swiping / Gestures Detector for Stress & Anxiety simulation
+  const lastTouchRef = useRef<{ time: number; x: number; y: number } | null>(null);
+  const anxiousSwipesCountRef = useRef<number>(0);
+
+  const handleTouchStart = (e: any) => {
+    const { pageX, pageY } = e.nativeEvent;
+    lastTouchRef.current = { time: Date.now(), x: pageX, y: pageY };
+  };
+
+  const handleTouchEnd = (e: any) => {
+    if (!lastTouchRef.current) return;
+    const { pageX, pageY } = e.nativeEvent;
+    const duration = Date.now() - lastTouchRef.current.time;
+    const distance = Math.sqrt(Math.pow(pageX - lastTouchRef.current.x, 2) + Math.pow(pageY - lastTouchRef.current.y, 2));
+
+    // A swipe gesture has distance >= 30px and is completed within 300ms
+    if (distance > 30 && duration < 300) {
+      const speed = distance / duration; // velocity in px/ms
+      
+      // Anxious swiping is characterized by fast, energetic flicks (speed > 1.0)
+      if (speed > 1.0) {
+        anxiousSwipesCountRef.current += 1;
+        const currentStress = state.stressScore;
+
+        if (anxiousSwipesCountRef.current >= 3) {
+          // Add trigger under the hood to store
+          const newTriggers = Array.from(new Set([...(state.lastAnalysis?.triggers || []), 'Erratic/Anxious Swipe Pattern (Restlessness)']));
+          
+          // Increment stress score towards 65% in 15% intervals
+          const nextStress = Math.min(65, currentStress + 15);
+          
+          useAuraStore.setState({
+            stressScore: nextStress,
+            lastAnalysis: {
+              ...state.lastAnalysis,
+              triggers: newTriggers,
+              deviationScore: nextStress,
+            } as any
+          });
+
+          // Check if stress score has reached 65% threshold to trigger breathing takeover!
+          if (nextStress >= 65) {
+            setShowTakeover(true);
+            setTakeoverTriggered(true);
+          }
+        }
+      }
+    }
+  };
+
   const handleCloseApp = () => {
+    anxiousSwipesCountRef.current = 0;
     state.setIsDemoMode(false);
     useAuraStore.setState({
       stressScore: 10,
       isCharging: false,
       currentSessionStart: null,
       insomniaSignal: false,
+      lastAnalysis: {
+        triggers: [],
+        score: 10,
+        deviationScore: 10,
+      } as any
     });
     setShowTakeover(false);
-    Alert.alert("Smart Choice! 💤", "Digital Timeout activated. Sleep well and recharge for tomorrow! 🌙");
+    Alert.alert("Intervention Complete! 🪷", "Stress score reset to baseline. Swiping patterns have calmed down!");
   };
 
   const handleContinueAnyway = () => {
+    anxiousSwipesCountRef.current = 0;
     setShowTakeover(false);
   };
 
@@ -149,6 +212,8 @@ export default function Home() {
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
@@ -355,7 +420,7 @@ export default function Home() {
                 Digital Intervention
               </Text>
               <Text style={{ color: '#EF4444', fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>
-                Late Night Scrolling
+                {isErraticSwipe ? "Biometric Agitation Detected" : "Late Night Scrolling"}
               </Text>
 
               {/* Dynamic Behavioral Feedback Comment */}
@@ -368,7 +433,7 @@ export default function Home() {
                 marginTop: 16,
                 marginBottom: 12
               }}>
-                "We noticed you've been surfing Instagram late at night while charging. Late-night screen stimulation suppresses melatonin and keeps your nervous system awake."
+                {takeoverComment}
               </Text>
 
               {/* Animated Box Breathing Circle */}
