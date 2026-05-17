@@ -30,32 +30,36 @@ TaskManager.defineTask(BACKGROUND_HEARTBEAT_TASK, async () => {
     let newSignals = [...signals];
 
     if (isCharging && isLateNight) {
-      isInsomnia = true;
-      const insomniaSignal: SignalEvent = { timestamp: now, type: 'insomnia' };
-      newSignals.push(insomniaSignal);
-      console.log('[Background] Insomnia detected (charging late night)');
+      // Only add one insomnia signal per hour to prevent duplicates
+      const lastHour = now - 60 * 60 * 1000;
+      const recentInsomnia = signals.some(s => s.type === 'insomnia' && s.timestamp >= lastHour);
+      if (!recentInsomnia) {
+        isInsomnia = true;
+        newSignals.push({ timestamp: now, type: 'insomnia' });
+        console.log('[Background] Insomnia detected (charging late night)');
+      }
     }
 
-    const state = useAuraStore.getState();
-    state.setIsCharging(isCharging);
+    const store = useAuraStore.getState();
+    store.setIsCharging(isCharging);
     if (newSignals.length > signals.length) {
       await saveSignals(newSignals);
-      state.setSignals(newSignals);
-      state.setInsomniaSignal(isInsomnia);
+      store.setSignals(newSignals);
+      store.setInsomniaSignal(isInsomnia);
     }
 
     const presented = await Notifications.getPresentedNotificationsAsync();
-    state.setIgnoredNotificationsCount(presented.length);
+    store.setIgnoredNotificationsCount(presented.length);
 
     const newScore = calculateStressScore();
-    state.setStressScore(newScore);
+    store.setStressScore(newScore);
 
     console.log(`[Background] Ignores: ${presented.length}, Stress: ${newScore}`);
 
     if (newScore > 65) {
-      const lastNudge = state.lastNudgeTime;
+      const lastNudge = store.lastNudgeTime;
       if (!lastNudge || now - lastNudge > 90 * 60 * 1000) {
-        state.setLastNudgeTime(now);
+        store.setLastNudgeTime(now);
         await Notifications.scheduleNotificationAsync({
           content: {
             title: "Mindful Break Needed?",
@@ -75,10 +79,11 @@ TaskManager.defineTask(BACKGROUND_HEARTBEAT_TASK, async () => {
 });
 
 export const useSignalEngine = () => {
-  const store = useAuraStore();
   const appState = useRef(AppState.currentState);
   const stillStartTime = useRef<number | null>(null);
   const demoTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Reliable 5-minute analysis timer — timestamp-based, not modulo
+  const lastAnalysisTime = useRef<number>(0);
 
   useEffect(() => {
     Notifications.requestPermissionsAsync();
@@ -93,10 +98,11 @@ export const useSignalEngine = () => {
     });
 
     const checkPresentedNotifications = async () => {
-      if (store.isDemoMode) return;
+      // Always read fresh state to avoid stale closure
+      if (useAuraStore.getState().isDemoMode) return;
       try {
         const presented = await Notifications.getPresentedNotificationsAsync();
-        store.setIgnoredNotificationsCount(presented.length);
+        useAuraStore.getState().setIgnoredNotificationsCount(presented.length);
       } catch (err) {
         console.error('Failed to get presented notifications', err);
       }
@@ -112,13 +118,13 @@ export const useSignalEngine = () => {
           console.log('[Background] Heartbeat task registered successfully!');
         }
       } catch (err) {
-        // Log as warning instead of error so it doesn't trigger a redbox in Expo Go
         console.warn('[Background] Failed to register task. This is expected in Expo Go. Use EAS Build for background tasks.', err);
       }
     };
 
     // Load all persisted state on startup
     const init = async () => {
+      const store = useAuraStore.getState();
       const signals = await loadSignals();
       store.setSignals(signals);
       updateComputedStats(signals);
@@ -142,6 +148,7 @@ export const useSignalEngine = () => {
 
       // Run initial analysis
       await analyzeCurrentState();
+      lastAnalysisTime.current = Date.now();
     };
     init();
 
@@ -153,16 +160,18 @@ export const useSignalEngine = () => {
 
     // Real-time battery state listener for instant UI updates when plugging/unplugging
     const batterySubscription = Battery.addBatteryStateListener(({ batteryState }) => {
-      if (store.isDemoMode) return;
+      // Always read fresh state — fixes stale closure bug
+      if (useAuraStore.getState().isDemoMode) return;
       const isCharging = batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL;
-      store.setIsCharging(isCharging);
+      useAuraStore.getState().setIsCharging(isCharging);
       recomputeStress();
     });
 
     // Accelerometer check (1Hz)
     Accelerometer.setUpdateInterval(1000);
     const accelSubscription = Accelerometer.addListener(data => {
-      if (store.isDemoMode) return;
+      // Always read fresh state — fixes stale closure bug
+      if (useAuraStore.getState().isDemoMode) return;
       const magnitude = Math.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2);
       const diff = Math.abs(magnitude - 1.0);
 
@@ -170,11 +179,11 @@ export const useSignalEngine = () => {
         if (!stillStartTime.current) {
           stillStartTime.current = Date.now();
         } else if (Date.now() - stillStartTime.current > 10 * 60 * 1000) {
-          store.setMovementState('still');
+          useAuraStore.getState().setMovementState('still');
         }
       } else {
         stillStartTime.current = null;
-        store.setMovementState('moving');
+        useAuraStore.getState().setMovementState('moving');
       }
     });
 
@@ -182,8 +191,9 @@ export const useSignalEngine = () => {
     const stressInterval = setInterval(async () => {
       await checkPresentedNotifications();
       recomputeStress();
-      // Re-analyze every 5 minutes
-      if (Date.now() % (5 * 60 * 1000) < 60 * 1000) {
+      // Re-analyze every 5 minutes — reliable timestamp comparison, not brittle modulo
+      if (Date.now() - lastAnalysisTime.current >= 5 * 60 * 1000) {
+        lastAnalysisTime.current = Date.now();
         await analyzeCurrentState();
       }
     }, 60 * 1000);
@@ -198,6 +208,8 @@ export const useSignalEngine = () => {
   }, []);
 
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+    // Always read fresh state from the store — fixes stale closure bug
+    const store = useAuraStore.getState();
     const isNowActive = nextAppState === 'active';
     const wasBackground = appState.current.match(/inactive|background/);
     const now = Date.now();
@@ -210,12 +222,13 @@ export const useSignalEngine = () => {
       if (demoTimeout.current) clearTimeout(demoTimeout.current);
 
       if (!store.isDemoMode) {
-        // Pickup event
+        // Pickup event — always read live signals to avoid stale array bug
+        const currentSignals = useAuraStore.getState().signals;
         const pickupSignal: SignalEvent = { timestamp: now, type: 'pickup' };
         store.addSignal(pickupSignal);
         store.setCurrentSessionStart(now);
 
-        const newSignals = [...store.signals, pickupSignal];
+        const newSignals = [...currentSignals, pickupSignal];
         updateComputedStats(newSignals);
         saveSignals(newSignals);
         recomputeStress();
@@ -235,22 +248,26 @@ export const useSignalEngine = () => {
             },
             trigger: null,
           });
-          store.setShowNudgeBanner(true);
+          useAuraStore.getState().setShowNudgeBanner(true);
         }, 5000);
       }
 
-      const start = store.currentSessionStart;
-      if (start && !store.isDemoMode) {
+      // Always read fresh state to avoid stale currentSessionStart
+      const freshStore = useAuraStore.getState();
+      const start = freshStore.currentSessionStart;
+      if (start && !freshStore.isDemoMode) {
         const duration = now - start;
         const sessionSignal: SignalEvent = {
           timestamp: now,
           type: 'session',
           durationMs: duration
         };
-        store.addSignal(sessionSignal);
-        store.setCurrentSessionStart(null);
+        freshStore.addSignal(sessionSignal);
+        freshStore.setCurrentSessionStart(null);
 
-        const newSignals = [...store.signals, sessionSignal];
+        // Always read live signals array for accurate state
+        const currentSignals = useAuraStore.getState().signals;
+        const newSignals = [...currentSignals, sessionSignal];
         updateComputedStats(newSignals);
         saveSignals(newSignals);
       }
@@ -260,24 +277,35 @@ export const useSignalEngine = () => {
   };
 
   const checkBattery = async () => {
+    // Always read fresh state — fixes stale closure bug
+    const store = useAuraStore.getState();
     if (store.isDemoMode) return;
-    const state = await Battery.getBatteryStateAsync();
-    const isCharging = state === Battery.BatteryState.CHARGING || state === Battery.BatteryState.FULL;
+
+    const batteryState = await Battery.getBatteryStateAsync();
+    const isCharging = batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL;
     store.setIsCharging(isCharging);
     const hour = new Date().getHours();
+    const now = Date.now();
 
     // 11 PM to 5 AM
     const isLateNight = hour >= 23 || hour < 5;
 
     if (isCharging && isLateNight) {
-      store.setInsomniaSignal(true);
-      store.addSignal({ timestamp: Date.now(), type: 'insomnia' });
+      // Deduplicate: only fire one insomnia signal per hour window
+      const lastHour = now - 60 * 60 * 1000;
+      const currentSignals = useAuraStore.getState().signals;
+      const recentInsomnia = currentSignals.some(s => s.type === 'insomnia' && s.timestamp >= lastHour);
+      if (!recentInsomnia) {
+        store.setInsomniaSignal(true);
+        store.addSignal({ timestamp: now, type: 'insomnia' });
+      }
     } else {
       store.setInsomniaSignal(false);
     }
   };
 
   const updateComputedStats = (signals: SignalEvent[]) => {
+    const store = useAuraStore.getState();
     const now = Date.now();
     const todayStart = new Date().setHours(0, 0, 0, 0);
     const hourAgo = now - 60 * 60 * 1000;
@@ -298,6 +326,7 @@ export const useSignalEngine = () => {
   };
 
   const recomputeStress = () => {
+    const store = useAuraStore.getState();
     const oldScore = store.stressScore;
     const newScore = calculateStressScore();
     store.setStressScore(newScore);
@@ -309,6 +338,7 @@ export const useSignalEngine = () => {
   };
 
   const triggerNudge = () => {
+    const store = useAuraStore.getState();
     const now = Date.now();
     const hour = new Date().getHours();
     const prefs = store.preferences;

@@ -7,10 +7,20 @@ const genAI = new GoogleGenerativeAI(geminiKey);
 
 const getContext = () => {
   const state = useAuraStore.getState();
-  const sessionCount = state.signals.filter(s => s.type === 'session' && s.timestamp > new Date().setHours(0, 0, 0, 0)).length;
-  const sessions = state.signals.filter(s => s.type === 'session' && s.timestamp > new Date().setHours(0, 0, 0, 0) && s.durationMs);
+  const todayStart = new Date().setHours(0, 0, 0, 0);
+  const sessionCount = state.signals.filter(s => s.type === 'session' && s.timestamp > todayStart).length;
+  const sessions = state.signals.filter(s => s.type === 'session' && s.timestamp > todayStart && s.durationMs);
   const avgDurationMs = sessions.length ? sessions.reduce((acc, s) => acc + (s.durationMs || 0), 0) / sessions.length : 0;
   const avgDuration = Math.round(avgDurationMs / (1000 * 60));
+
+  // Compute micro-check vs long-session breakdown from real signals
+  const shortSessions = sessions.filter(s => (s.durationMs || 0) < 2 * 60 * 1000).length;
+  const longSessions = sessions.filter(s => (s.durationMs || 0) >= 30 * 60 * 1000).length;
+  const sessionProfile = longSessions > 0
+    ? `${longSessions} deep session${longSessions > 1 ? 's' : ''} (30+ min)`
+    : shortSessions > sessions.length / 2
+    ? `Mostly micro-checks (under 2 min)`
+    : `Mixed usage pattern`;
 
   const triggers = state.lastAnalysis?.triggers || [];
   const isErraticSwipe = triggers.includes('Erratic/Anxious Swipe Pattern (Restlessness)');
@@ -20,11 +30,11 @@ const getContext = () => {
 - Pickups in last hour: ${state.pickupsLastHour}
 - Last pickup was at: ${state.lastPickupTime ? new Date(state.lastPickupTime).toLocaleTimeString() : 'N/A'}
 - Phone sessions today: ${sessionCount} sessions, avg ${avgDuration} minutes
+- Session character: ${sessionProfile}
 - Insomnia signal: ${state.insomniaSignal}
 - Power status: ${state.isCharging ? '⚡ Charging' : '🔋 On battery'}
 - Movement: ${state.movementState}
 - Scrolling/Swiping gesture patterns: ${isErraticSwipe ? '⚠️ Erratic/Frantic (Restlessness)' : 'Steady/Calm'}
-- Top Bedtime Screentime Usage: TikTok (1h 45m - 50%), Instagram (1h 12m - 34%), Twitter/X (35m - 16%)
 - Time of day right now: ${new Date().toLocaleTimeString()}
 `;
 };

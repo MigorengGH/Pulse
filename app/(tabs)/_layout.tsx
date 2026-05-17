@@ -1,6 +1,6 @@
 import { Tabs, useRouter } from 'expo-router';
 import { View, Text } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuraStore } from '../../store/useAuraStore';
 import NudgeBanner from '../../components/NudgeBanner';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,11 +9,17 @@ import { Colors } from '../../constants/colors';
 export default function TabLayout() {
   const showNudge = useAuraStore(state => state.showNudgeBanner);
   const router = useRouter();
+  // Guard against pushing multiple copies of the modal on rapid re-renders
+  const nudgePushed = useRef(false);
 
   useEffect(() => {
-    if (showNudge) {
-      // Automatically push/launch the full-screen Breathing takeover intervention!
+    if (showNudge && !nudgePushed.current) {
+      nudgePushed.current = true;
       router.push('/(modals)/nudge');
+    }
+    if (!showNudge) {
+      // Reset so next nudge trigger can push again
+      nudgePushed.current = false;
     }
   }, [showNudge]);
 

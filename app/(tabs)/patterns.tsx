@@ -243,11 +243,19 @@ export default function PatternsScreen() {
     return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   }, [store.signals, store.currentSessionStart, store.isDemoMode]);
 
-  // Weekly stats
-  const weekAgo = Date.now() - 7 * 86400000;
-  const weekSignals = store.signals.filter(s => s.timestamp >= weekAgo);
-  const weekPickups = weekSignals.filter(s => s.type === 'pickup').length;
-  const weekScreenTimeMins = Math.round(weekSignals.filter(s => s.type === 'session' && s.durationMs).reduce((a, s) => a + (s.durationMs || 0), 0) / 60000);
+  // Weekly stats — memoized to avoid re-filtering the full signal array on every render
+  const { weekPickups, weekScreenTimeMins } = useMemo(() => {
+    const weekAgo = Date.now() - 7 * 86400000;
+    const weekSignals = store.signals.filter(s => s.timestamp >= weekAgo);
+    return {
+      weekPickups: weekSignals.filter(s => s.type === 'pickup').length,
+      weekScreenTimeMins: Math.round(
+        weekSignals
+          .filter(s => s.type === 'session' && s.durationMs)
+          .reduce((a, s) => a + (s.durationMs || 0), 0) / 60000
+      ),
+    };
+  }, [store.signals]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
