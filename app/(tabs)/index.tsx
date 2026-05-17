@@ -420,6 +420,30 @@ export default function Home() {
                     Discuss rhythms with Aura
                   </Text>
                 </TouchableOpacity>
+
+                {/* Direct Action Button to Breathing modal */}
+                <TouchableOpacity
+                  onPress={() => router.push('/(modals)/nudge')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: Colors.accent,
+                    borderRadius: 16,
+                    paddingVertical: 14,
+                    shadowColor: Colors.accent,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 8,
+                    elevation: 3,
+                    marginTop: 12,
+                  }}
+                >
+                  <Ionicons name="leaf-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    Take a Breathing Pause 🧘
+                  </Text>
+                </TouchableOpacity>
               </View>
             </GlassCard>
           </View>
