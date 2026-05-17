@@ -67,8 +67,10 @@ export const calculateStressScore = (): number => {
 
   // ─── Deviation awareness (if baseline exists) ──────────────
   if (state.baseline) {
-    const bucketBaseline = state.baseline.buckets[timeBucket];
-    if (bucketBaseline.sampleCount > 0 && state.pickupsLastHour > bucketBaseline.avgAppSwitches * 1.5) {
+    const bucketBaseline = state.baseline.buckets?.[timeBucket];
+    const avgAppSwitches = bucketBaseline?.avgAppSwitches ?? 0;
+    const sampleCount = bucketBaseline?.sampleCount ?? 0;
+    if (sampleCount > 0 && state.pickupsLastHour > avgAppSwitches * 1.5) {
       score += 10; // Above baseline for this time of day
     }
   }
