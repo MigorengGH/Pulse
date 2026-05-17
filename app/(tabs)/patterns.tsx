@@ -324,6 +324,7 @@ export default function PatternsScreen() {
           </View>
 
           <BarChart
+            key={store.isDemoMode ? `demo-${store.signals.length}` : `normal-${store.signals.length}`}
             data={chartData}
             barWidth={22}
             spacing={16}
