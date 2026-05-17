@@ -1,6 +1,7 @@
 module.exports = {
   name: "Pulse",
   slug: "aura",
+  owner: "haidar1234",
   scheme: "pulse",
   version: "1.0.0",
   orientation: "portrait",
