@@ -35,8 +35,7 @@ module.exports = {
   plugins: [
     "expo-router",
     "expo-font",
-    "expo-notifications",
-    "expo-background-task"
+    "expo-notifications"
   ],
   extra: {
     geminiKey: process.env.EXPO_PUBLIC_GEMINI_KEY || "",
