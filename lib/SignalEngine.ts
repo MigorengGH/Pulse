@@ -12,6 +12,7 @@ import { calculateStressScore } from './StressCalculator';
 import { loadSignals, saveSignals, loadBaseline, loadNudges, loadPreferences, countDaysOfData } from './storage';
 import { buildAndSaveBaseline } from './baseline';
 import { analyzeCurrentState } from './detector';
+import { startOverlayMonitor, stopOverlayMonitor, hasOverlayPermission, requestOverlayPermission } from './OverlayModule';
 
 const BACKGROUND_HEARTBEAT_TASK = 'background-heartbeat-task';
 
@@ -275,6 +276,8 @@ export const useSignalEngine = () => {
     }
 
     if (wasBackground && isNowActive) {
+      // Stop native overlay monitor — user returned to Pulse
+      stopOverlayMonitor();
       if (demoTimeout.current) clearTimeout(demoTimeout.current);
 
       if (!store.isDemoMode) {
@@ -295,7 +298,7 @@ export const useSignalEngine = () => {
         
         if (recentPickups.length >= 3) {
           console.log(`[Intervention] Frantic pickup pattern detected! (${recentPickups.length} pickups in the last minute)`);
-          store.setStressScore(78); // Push stress score to elevated so context is clear
+          store.setStressScore(78);
           useAuraStore.setState({
             lastAnalysis: {
               score: 78,
@@ -304,53 +307,49 @@ export const useSignalEngine = () => {
             } as any
           });
           store.setLastNudgeTime(now);
-          store.setShowNudgeBanner(true); // Fire breathing takeover modal overlay instantly!
+          store.setShowNudgeBanner(true);
         }
 
         // Rebuild baseline periodically
         await buildAndSaveBaseline();
       }
     } else if (!isNowActive && appState.current === 'active') {
-      // Backgrounding — user left Pulse (e.g. opened Instagram)
+      // User left Pulse — start native overlay countdown (10 seconds)
       if (!store.isDemoMode) {
+        // ─── 1. Native Android overlay (draws ON TOP of Instagram) ────────────
+        // Check if permission is granted. If yes, start the native service.
+        // The service will show the full-screen breathing card after 10s.
+        hasOverlayPermission().then(granted => {
+          if (granted) {
+            startOverlayMonitor(10000);
+          } else {
+            // First time: ask for permission, then start monitoring
+            requestOverlayPermission();
+          }
+        });
+
+        // ─── 2. Fallback: heads-up notification (works even without permission) 
         demoTimeout.current = setTimeout(async () => {
-          // ─── Fire a MAX-importance heads-up notification ───────────────────
-          // On Android, this will slide in from the TOP of the screen,
-          // appearing on top of any app the user currently has open (e.g. Instagram).
-          // The user can tap it to be taken directly back into Pulse.
           await Notifications.scheduleNotificationAsync({
             content: {
               title: "🌿 Pulse — Mindful Check-in",
               body: "You've been scrolling for 10 seconds. Tap to take a 10-second breathing break.",
               sound: true,
-              // Android-specific: set category for actionable notification
               categoryIdentifier: 'doomscroll',
               data: { screen: '/(modals)/nudge' },
-              // Android channel — MUST match the channel ID created above
-              ...({
-                android: {
-                  channelId: 'pulse-doomscroll',
-                  color: '#2DD4BF',
-                  priority: 'max',
-                  vibrate: true,
-                  sticky: false,
-                }
-              }),
+              ...({ android: { channelId: 'pulse-doomscroll', color: '#2DD4BF', priority: 'max', vibrate: true } }),
             },
             trigger: null,
           });
-
-          // Inject elevated stress and the doomscrolling trigger into the store
           const freshStore = useAuraStore.getState();
           freshStore.setStressScore(72);
           useAuraStore.setState({
             lastAnalysis: {
-              score: 72,
-              deviationScore: 72,
+              score: 72, deviationScore: 72,
               triggers: ['Late night scrolling while still (in-bed scrolling)']
             } as any
           });
-        }, 10000); // Fires exactly 10 seconds after leaving Pulse
+        }, 10000);
       }
 
       // Always read fresh state to avoid stale currentSessionStart
