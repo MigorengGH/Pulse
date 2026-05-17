@@ -5,8 +5,9 @@ import { BlurView } from 'expo-blur';
 import { useAuraStore } from '../../store/useAuraStore';
 import type { SignalEvent } from '../../types';
 import { getInsight, generateWeeklyInsight } from '../../lib/GeminiClient';
-import { loadCachedInsight, saveInsight, saveSignals } from '../../lib/storage';
+import { loadCachedInsight, saveInsight, saveSignals, loadSignals, loadBaseline, saveBaseline } from '../../lib/storage';
 import { buildAndSaveBaseline } from '../../lib/baseline';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 
@@ -58,6 +59,21 @@ export default function PatternsScreen() {
   };
 
   const loadDemoData = async () => {
+    if (store.isDemoMode) return;
+
+    // 1. Back up current signals and baseline to storage
+    try {
+      const currentSignals = await loadSignals();
+      await AsyncStorage.setItem('aura_signals_backup', JSON.stringify(currentSignals));
+      
+      const baseline = store.baseline || await loadBaseline();
+      if (baseline) {
+        await AsyncStorage.setItem('aura_baseline_backup', JSON.stringify(baseline));
+      }
+    } catch (e) {
+      console.error('Failed to create backup for demo mode', e);
+    }
+
     const now = Date.now();
     const dayMs = 24 * 60 * 60 * 1000;
     const demoSignals: SignalEvent[] = [];
@@ -80,6 +96,7 @@ export default function PatternsScreen() {
     demoSignals.push({ timestamp: now - 3 * dayMs - 2 * 3600000, type: 'insomnia' });
     demoSignals.push({ timestamp: now - 1 * dayMs - 1 * 3600000, type: 'insomnia' });
 
+    store.setIsDemoMode(true);
     store.setSignals(demoSignals);
     store.setDaysOfData(7);
     
@@ -111,8 +128,71 @@ export default function PatternsScreen() {
 
     Alert.alert(
       "Demo Week Loaded! 📊",
-      "7 days of realistic screen activity, frantic late-night scroll patterns, and sleep-cycle disruptions have been loaded. Generate a Weekly Reflection below to see how our AI reviews it!"
+      "7 days of realistic screen activity, frantic late-night scroll patterns, and sleep-cycle disruptions have been loaded. You are now in persistent Demo Mode!"
     );
+  };
+
+  const exitDemoMode = async () => {
+    setIsLoadingWeekly(true);
+    try {
+      // 1. Load backup signals and baseline from storage
+      const backupSignalsData = await AsyncStorage.getItem('aura_signals_backup');
+      const backupBaselineData = await AsyncStorage.getItem('aura_baseline_backup');
+
+      let restoredSignals: SignalEvent[] = [];
+      if (backupSignalsData) {
+        restoredSignals = JSON.parse(backupSignalsData);
+      }
+
+      // 2. Set Demo Mode to false
+      store.setIsDemoMode(false);
+      
+      // 3. Save restored signals back to main storage
+      await saveSignals(restoredSignals);
+      store.setSignals(restoredSignals);
+      store.setDaysOfData(restoredSignals.length > 0 ? 7 : 0);
+
+      // 4. Restore baseline
+      if (backupBaselineData) {
+        const restoredBaseline = JSON.parse(backupBaselineData);
+        store.setBaseline(restoredBaseline);
+        await saveBaseline(restoredBaseline);
+      } else {
+        store.setBaseline(null);
+        await AsyncStorage.removeItem('aura_baseline');
+      }
+
+      // 5. Reset stress and triggers to clean baseline outcomes
+      useAuraStore.setState({
+        stressScore: 30,
+        insomniaSignal: false,
+        lastAnalysis: {
+          score: 30,
+          deviationScore: 0,
+          triggers: []
+        } as any
+      });
+
+      // 6. Refresh AI Analysis and Weekly Reflection back to normal
+      const text = await getInsight();
+      setInsight(text);
+      saveInsight(text);
+      setWeeklyInsight(null);
+
+      // 7. Clean up backup keys
+      await AsyncStorage.removeItem('aura_signals_backup');
+      await AsyncStorage.removeItem('aura_baseline_backup');
+
+      Alert.alert(
+        "Demo Mode Exited! 🧘",
+        "Your original behavioral trends, screen pickups, and baseline stats have been fully restored."
+      );
+    } catch (e) {
+      console.error('Failed to exit demo mode', e);
+      Alert.alert("Error", "Failed to restore previous state.");
+    } finally {
+      setIsLoadingWeekly(false);
+    }
   };
 
   // Chart data
@@ -173,6 +253,43 @@ export default function PatternsScreen() {
       >
         <Text style={styles.headerText}>Daily Rhythm</Text>
         <Text style={styles.subHeaderText}>Comparing today to your 3-day baseline.</Text>
+
+        {store.isDemoMode && (
+          <View style={{ 
+            backgroundColor: 'rgba(45, 212, 191, 0.08)', 
+            borderColor: 'rgba(45, 212, 191, 0.2)', 
+            borderWidth: 1, 
+            borderRadius: 16, 
+            padding: 16, 
+            marginBottom: 20, 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            gap: 12 
+          }}>
+            <Ionicons name="sparkles" size={20} color={Colors.accent} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: Colors.textPrimary, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}>
+                ✨ Persistent Demo Mode Active
+              </Text>
+              <Text style={{ color: Colors.textMuted, fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, marginTop: 2 }}>
+                Simulating realistic sleep disruptions and in-bed screen activity.
+              </Text>
+            </View>
+            <TouchableOpacity 
+              onPress={exitDemoMode}
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: 'rgba(239, 68, 68, 0.15)',
+              }}
+            >
+              <Text style={{ color: '#EF4444', fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}>Exit</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Usage Trends Chart (MOVED UP) */}
         <GlassCard style={{ marginBottom: 24 }}>
@@ -400,10 +517,20 @@ export default function PatternsScreen() {
 
         {/* Demo button (dev only) */}
         {__DEV__ && (
-          <TouchableOpacity style={styles.demoButton} onPress={loadDemoData}>
-            <Ionicons name="construct" size={18} color={Colors.textMuted} style={{ marginRight: 8 }} />
-            <Text style={styles.demoButtonText}>Load Demo Week</Text>
-          </TouchableOpacity>
+          store.isDemoMode ? (
+            <TouchableOpacity 
+              style={[styles.demoButton, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1 }]} 
+              onPress={exitDemoMode}
+            >
+              <Ionicons name="exit-outline" size={18} color="#EF4444" style={{ marginRight: 8 }} />
+              <Text style={[styles.demoButtonText, { color: '#EF4444' }]}>Exit Demo Mode</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.demoButton} onPress={loadDemoData}>
+              <Ionicons name="construct" size={18} color={Colors.textMuted} style={{ marginRight: 8 }} />
+              <Text style={styles.demoButtonText}>Load Demo Week</Text>
+            </TouchableOpacity>
+          )
         )}
       </ScrollView>
     </View>
