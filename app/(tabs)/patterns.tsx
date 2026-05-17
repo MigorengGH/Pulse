@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { BlurView } from 'expo-blur';
 import { useAuraStore } from '../../store/useAuraStore';
@@ -75,8 +75,39 @@ export default function PatternsScreen() {
       }
     }
 
+    // Add realistic sleep cycle insomnia signals so the dynamic alerts trigger
+    demoSignals.push({ timestamp: now - 3 * dayMs - 2 * 3600000, type: 'insomnia' });
+    demoSignals.push({ timestamp: now - 1 * dayMs - 1 * 3600000, type: 'insomnia' });
+
     store.setSignals(demoSignals);
     store.setDaysOfData(7);
+    
+    // Inject active triggers into store so dashboard reflects the newly loaded signals
+    useAuraStore.setState({
+      insomniaSignal: true,
+      stressScore: 58,
+      lastAnalysis: {
+        score: 58,
+        deviationScore: 58,
+        triggers: [
+          'Late night scrolling while still (in-bed scrolling)',
+          'Frequent phone pickup habit during sleep hours'
+        ]
+      } as any
+    });
+
+    // Automatically trigger a refresh on AI Analysis
+    const fetchNewInsight = async () => {
+      const text = await getInsight();
+      setInsight(text);
+      saveInsight(text);
+    };
+    fetchNewInsight();
+
+    Alert.alert(
+      "Demo Week Loaded! 📊",
+      "7 days of realistic screen activity, frantic late-night scroll patterns, and sleep-cycle disruptions have been loaded. Generate a Weekly Reflection below to see how our AI reviews it!"
+    );
   };
 
   // Chart data

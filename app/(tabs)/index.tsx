@@ -8,10 +8,13 @@ import { Colors, getGreeting, getStressLabel, getStressColor } from '../../const
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useRouter } from 'expo-router';
+
 const { width } = Dimensions.get('window');
 
 export default function Home() {
   const state = useAuraStore();
+  const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
 
@@ -313,12 +316,12 @@ export default function Home() {
                   {lastNudgeAge && <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium' }}>{lastNudgeAge}</Text>}
                 </View>
                 
-                <Text style={{ color: Colors.textPrimary, fontSize: 17, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 26, marginBottom: 16 }}>
+                <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_600SemiBold', lineHeight: 24, marginBottom: 12 }}>
                   {lastNudge ? lastNudge.message : "Aura is currently observing your digital rhythm to provide contextual mindfulness nudges."}
                 </Text>
 
                 {state.lastAnalysis && state.lastAnalysis.triggers.length > 0 && (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
                     {state.lastAnalysis.triggers.map((trigger, i) => (
                       <View key={i} style={{ 
                         backgroundColor: 'rgba(0,0,0,0.05)', 
@@ -335,6 +338,88 @@ export default function Home() {
                     ))}
                   </View>
                 )}
+
+                {/* Custom rich behavioral recommendations based on current triggers & stress! */}
+                <View style={{ 
+                  marginTop: 4, 
+                  borderTopWidth: 1, 
+                  borderColor: Colors.bgBorder, 
+                  paddingTop: 16, 
+                  gap: 12 
+                }}>
+                  <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
+                    Active Recommendations:
+                  </Text>
+                  
+                  {state.stressScore > 50 ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name="medical-outline" size={16} color="#EF4444" />
+                      <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium', flex: 1 }}>
+                        Elevated stress detected. Engage in a brief 4-7-8 deep breathing pattern.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name="checkmark-circle-outline" size={16} color="#2DD4BF" />
+                      <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium', flex: 1 }}>
+                        Keep your breathing rhythm steady and screen sessions short.
+                      </Text>
+                    </View>
+                  )}
+
+                  {state.insomniaSignal ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name="moon-outline" size={16} color="#F59E0B" />
+                      <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium', flex: 1 }}>
+                        Late-night screen activity identified. Enable night shift and dim blue light.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name="sunny-outline" size={16} color="#3B82F6" />
+                      <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium', flex: 1 }}>
+                        Circadian balance healthy. Excellent night rest behaviors.
+                      </Text>
+                    </View>
+                  )}
+
+                  {state.pickupsToday > 25 ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name="timer-outline" size={16} color="#EF4444" />
+                      <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium', flex: 1 }}>
+                        Frequent pick-up count is active. Place device face-down to protect focus.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name="leaf-outline" size={16} color="#2DD4BF" />
+                      <Text style={{ color: Colors.textSecondary, fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium', flex: 1 }}>
+                        High attention stamina. Great screen rest intervals.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Direct Action Button to Chat screen */}
+                <TouchableOpacity
+                  onPress={() => router.push('/(tabs)/chat')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(45, 212, 191, 0.08)',
+                    borderRadius: 16,
+                    paddingVertical: 12,
+                    borderWidth: 1,
+                    borderColor: 'rgba(45, 212, 191, 0.2)',
+                    marginTop: 18,
+                  }}
+                >
+                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={Colors.accent} style={{ marginRight: 8 }} />
+                  <Text style={{ color: Colors.accent, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    Discuss rhythms with Aura
+                  </Text>
+                </TouchableOpacity>
               </View>
             </GlassCard>
           </View>
