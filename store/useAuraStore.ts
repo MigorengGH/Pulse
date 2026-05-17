@@ -30,6 +30,7 @@ interface AuraState {
   appIsActive: boolean;
   onboardingComplete: boolean;
   daysOfData: number;
+  isDemoMode: boolean;
 
   // ─── User Preferences ──────────────────────────────────────
   preferences: UserPreferences;
@@ -55,6 +56,7 @@ interface AuraState {
   setDaysOfData: (days: number) => void;
   setPreferences: (prefs: Partial<UserPreferences>) => void;
   setIsCharging: (charging: boolean) => void;
+  setIsDemoMode: (isDemo: boolean) => void;
   resetBaseline: () => void;
 }
 
@@ -79,6 +81,7 @@ export const useAuraStore = create<AuraState>((set) => ({
   appIsActive: true,
   onboardingComplete: false,
   daysOfData: 0,
+  isDemoMode: false,
   preferences: {
     nudgesEnabled: true,
     lateNightMode: true,
@@ -109,5 +112,6 @@ export const useAuraStore = create<AuraState>((set) => ({
     preferences: { ...state.preferences, ...prefs },
   })),
   setIsCharging: (isCharging) => set({ isCharging }),
+  setIsDemoMode: (isDemoMode) => set({ isDemoMode }),
   resetBaseline: () => set({ baseline: null, deviationScore: 0, lastAnalysis: null }),
 }));

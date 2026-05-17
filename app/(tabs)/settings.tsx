@@ -194,6 +194,118 @@ export default function SettingsScreen() {
         )}
       </Card>
 
+      {/* Presentation Demo Controls */}
+      <SectionLabel>Presentation Demo Controls</SectionLabel>
+      <Card>
+        <View style={styles.row}>
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text style={styles.label}>Enable Presentation Mode</Text>
+            <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>
+              Disables live sensors to let you manually override states for the demo.
+            </Text>
+          </View>
+          <Switch
+            value={store.isDemoMode}
+            onValueChange={(val) => {
+              store.setIsDemoMode(val);
+              if (!val) {
+                // reset everything to false when disabling
+                store.setIsCharging(false);
+                store.setInsomniaSignal(false);
+                store.setPickups(0, 0, null);
+                store.setCurrentSessionStart(null);
+              }
+            }}
+            trackColor={{ false: Colors.bgBorder, true: Colors.accent }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+
+        {store.isDemoMode && (
+          <>
+            <Divider />
+            <View style={styles.row}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.label}>⚡ Simulate Battery Charging</Text>
+                <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>
+                  Force battery power status to charging state.
+                </Text>
+              </View>
+              <Switch
+                value={store.isCharging}
+                onValueChange={(val) => {
+                  store.setIsCharging(val);
+                }}
+                trackColor={{ false: Colors.bgBorder, true: Colors.accent }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <Divider />
+            <View style={styles.row}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.label}>🌙 Simulate Late Night (Insomnia)</Text>
+                <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>
+                  Force nocturnal circadian period activity detection.
+                </Text>
+              </View>
+              <Switch
+                value={store.insomniaSignal}
+                onValueChange={(val) => {
+                  store.setInsomniaSignal(val);
+                }}
+                trackColor={{ false: Colors.bgBorder, true: Colors.accent }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <Divider />
+            <View style={styles.row}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.label}>📈 Simulate Elevated Checks (5 Pickups)</Text>
+                <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>
+                  Force pickup rate to 5, triggering elevated stress levels.
+                </Text>
+              </View>
+              <Switch
+                value={store.pickupsLastHour >= 5}
+                onValueChange={(val) => {
+                  if (val) {
+                    store.setPickups(5, 5, Date.now());
+                  } else {
+                    store.setPickups(0, 0, null);
+                  }
+                }}
+                trackColor={{ false: Colors.bgBorder, true: Colors.accent }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <Divider />
+            <View style={styles.row}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.label}>📱 Simulate Constantly Playing Phone</Text>
+                <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>
+                  Force screen active time to exceed 20 consecutive minutes.
+                </Text>
+              </View>
+              <Switch
+                value={store.currentSessionStart !== null}
+                onValueChange={(val) => {
+                  if (val) {
+                    store.setCurrentSessionStart(Date.now() - 20 * 60 * 1000);
+                  } else {
+                    store.setCurrentSessionStart(null);
+                  }
+                }}
+                trackColor={{ false: Colors.bgBorder, true: Colors.accent }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+          </>
+        )}
+      </Card>
+
       {/* Hidden Demo Button */}
       {showDemoButton && (
         <TouchableOpacity

@@ -93,6 +93,7 @@ export const useSignalEngine = () => {
     });
 
     const checkPresentedNotifications = async () => {
+      if (store.isDemoMode) return;
       try {
         const presented = await Notifications.getPresentedNotificationsAsync();
         store.setIgnoredNotificationsCount(presented.length);
@@ -153,6 +154,7 @@ export const useSignalEngine = () => {
     // Accelerometer check (1Hz)
     Accelerometer.setUpdateInterval(1000);
     const accelSubscription = Accelerometer.addListener(data => {
+      if (store.isDemoMode) return;
       const magnitude = Math.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2);
       const diff = Math.abs(magnitude - 1.0);
 
@@ -187,6 +189,7 @@ export const useSignalEngine = () => {
   }, []);
 
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+    if (store.isDemoMode) return;
     const isNowActive = nextAppState === 'active';
     const wasBackground = appState.current.match(/inactive|background/);
     const now = Date.now();
@@ -245,6 +248,7 @@ export const useSignalEngine = () => {
   };
 
   const checkBattery = async () => {
+    if (store.isDemoMode) return;
     const state = await Battery.getBatteryStateAsync();
     const isCharging = state === Battery.BatteryState.CHARGING || state === Battery.BatteryState.FULL;
     store.setIsCharging(isCharging);
