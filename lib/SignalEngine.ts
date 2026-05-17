@@ -189,31 +189,34 @@ export const useSignalEngine = () => {
   }, []);
 
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-    if (store.isDemoMode) return;
     const isNowActive = nextAppState === 'active';
     const wasBackground = appState.current.match(/inactive|background/);
     const now = Date.now();
 
-    store.setAppIsActive(isNowActive);
+    if (!store.isDemoMode) {
+      store.setAppIsActive(isNowActive);
+    }
 
     if (wasBackground && isNowActive) {
       if (demoTimeout.current) clearTimeout(demoTimeout.current);
 
-      // Pickup event
-      const pickupSignal: SignalEvent = { timestamp: now, type: 'pickup' };
-      store.addSignal(pickupSignal);
-      store.setCurrentSessionStart(now);
+      if (!store.isDemoMode) {
+        // Pickup event
+        const pickupSignal: SignalEvent = { timestamp: now, type: 'pickup' };
+        store.addSignal(pickupSignal);
+        store.setCurrentSessionStart(now);
 
-      const newSignals = [...store.signals, pickupSignal];
-      updateComputedStats(newSignals);
-      saveSignals(newSignals);
-      recomputeStress();
+        const newSignals = [...store.signals, pickupSignal];
+        updateComputedStats(newSignals);
+        saveSignals(newSignals);
+        recomputeStress();
 
-      // Rebuild baseline periodically
-      await buildAndSaveBaseline();
+        // Rebuild baseline periodically
+        await buildAndSaveBaseline();
+      }
     } else if (!isNowActive && appState.current === 'active') {
       // Backgrounding
-      if (__DEV__) {
+      if (__DEV__ && !store.isDemoMode) {
         demoTimeout.current = setTimeout(async () => {
           await Notifications.scheduleNotificationAsync({
             content: {
@@ -228,7 +231,7 @@ export const useSignalEngine = () => {
       }
 
       const start = store.currentSessionStart;
-      if (start) {
+      if (start && !store.isDemoMode) {
         const duration = now - start;
         const sessionSignal: SignalEvent = {
           timestamp: now,
