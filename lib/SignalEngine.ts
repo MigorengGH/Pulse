@@ -151,6 +151,14 @@ export const useSignalEngine = () => {
     const batteryInterval = setInterval(checkBattery, 5 * 60 * 1000);
     checkBattery(); // initial check
 
+    // Real-time battery state listener for instant UI updates when plugging/unplugging
+    const batterySubscription = Battery.addBatteryStateListener(({ batteryState }) => {
+      if (store.isDemoMode) return;
+      const isCharging = batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL;
+      store.setIsCharging(isCharging);
+      recomputeStress();
+    });
+
     // Accelerometer check (1Hz)
     Accelerometer.setUpdateInterval(1000);
     const accelSubscription = Accelerometer.addListener(data => {
@@ -185,6 +193,7 @@ export const useSignalEngine = () => {
       clearInterval(batteryInterval);
       clearInterval(stressInterval);
       accelSubscription.remove();
+      batterySubscription.remove();
     };
   }, []);
 
