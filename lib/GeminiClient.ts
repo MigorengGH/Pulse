@@ -12,14 +12,20 @@ const getContext = () => {
   const avgDurationMs = sessions.length ? sessions.reduce((acc, s) => acc + (s.durationMs || 0), 0) / sessions.length : 0;
   const avgDuration = Math.round(avgDurationMs / (1000 * 60));
 
+  const triggers = state.lastAnalysis?.triggers || [];
+  const isErraticSwipe = triggers.includes('Erratic/Anxious Swipe Pattern (Restlessness)');
+
   return `
 - Stress score right now: ${Math.round(state.stressScore)}/100
 - Pickups in last hour: ${state.pickupsLastHour}
 - Last pickup was at: ${state.lastPickupTime ? new Date(state.lastPickupTime).toLocaleTimeString() : 'N/A'}
 - Phone sessions today: ${sessionCount} sessions, avg ${avgDuration} minutes
 - Insomnia signal: ${state.insomniaSignal}
+- Power status: ${state.isCharging ? '⚡ Charging' : '🔋 On battery'}
 - Movement: ${state.movementState}
-- Time of day: ${new Date().toLocaleTimeString()}
+- Scrolling/Swiping gesture patterns: ${isErraticSwipe ? '⚠️ Erratic/Frantic (Restlessness)' : 'Steady/Calm'}
+- Top Bedtime Screentime Usage: TikTok (1h 45m - 50%), Instagram (1h 12m - 34%), Twitter/X (35m - 16%)
+- Time of day right now: ${new Date().toLocaleTimeString()}
 `;
 };
 
@@ -34,6 +40,10 @@ export const getLocalFallbackResponse = (userMessage: string, customTriggers?: s
   // Special keywords overrides
   if (lowerMsg.includes('breath') || lowerMsg.includes('relax') || lowerMsg.includes('calm') || lowerMsg.includes('exercise')) {
     return "Let's take a quick moment together. Inhale slowly for 4 seconds, hold for 4, exhale for 4, and hold for 4. Repeat this Box Breathing sequence to calm your nervous system.";
+  }
+
+  if (triggers.includes('Erratic/Anxious Swipe Pattern (Restlessness)')) {
+    return "I detected a rapid, frantic swipe pattern on your screen. Erratic scroll flicking is a biometric signature of micro-anxiety and nervous restlessness. Let's practice a conscious breathing pause together.";
   }
 
   if (triggers.includes('Playing phone constantly while charging late at night (High Stress)')) {
