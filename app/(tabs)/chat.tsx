@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Linking } from 'react-native';
 import { getAuraChatResponse } from '../../lib/GeminiClient';
 import { useAuraStore } from '../../store/useAuraStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -161,14 +161,59 @@ export default function ChatScreen() {
               borderWidth: msg.role === 'user' ? 0 : 1,
               borderColor: msg.role === 'user' ? 'transparent' : Colors.bgBorder,
             }}>
-              <Text style={{
-                color: msg.role === 'user' ? '#FFFFFF' : Colors.textPrimary,
-                fontSize: 15,
-                lineHeight: 24,
-                fontFamily: 'PlusJakartaSans_500Medium',
-              }}>
-                {msg.text}
-              </Text>
+              {(() => {
+                if (msg.role === 'user') {
+                  return (
+                    <Text style={{
+                      color: '#FFFFFF',
+                      fontSize: 15,
+                      lineHeight: 24,
+                      fontFamily: 'PlusJakartaSans_500Medium',
+                    }}>
+                      {msg.text}
+                    </Text>
+                  );
+                }
+
+                // Match specific lifeline numbers: 0179787232, 988, 741741, 911
+                const phoneRegex = /(0179787232|988|741741|911)/g;
+                const parts = msg.text.split(phoneRegex);
+
+                return (
+                  <Text style={{
+                    color: Colors.textPrimary,
+                    fontSize: 15,
+                    lineHeight: 24,
+                    fontFamily: 'PlusJakartaSans_500Medium',
+                  }}>
+                    {parts.map((part, i) => {
+                      const isMatch = phoneRegex.test(part);
+                      phoneRegex.lastIndex = 0; // reset regex index
+                      
+                      if (isMatch) {
+                        return (
+                          <Text
+                            key={i}
+                            onPress={() => {
+                              Linking.openURL(`tel:${part}`).catch(err => {
+                                console.warn("Failed to open phone dialer", err);
+                              });
+                            }}
+                            style={{
+                              color: Colors.accent,
+                              fontFamily: 'PlusJakartaSans_700Bold',
+                              textDecorationLine: 'underline',
+                            }}
+                          >
+                            {part}
+                          </Text>
+                        );
+                      }
+                      return part;
+                    })}
+                  </Text>
+                );
+              })()}
             </View>
           </View>
         ))}

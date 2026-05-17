@@ -7,11 +7,11 @@ const genAI = new GoogleGenerativeAI(geminiKey);
 
 const getContext = () => {
   const state = useAuraStore.getState();
-  const sessionCount = state.signals.filter(s => s.type === 'session' && s.timestamp > new Date().setHours(0,0,0,0)).length;
-  const sessions = state.signals.filter(s => s.type === 'session' && s.timestamp > new Date().setHours(0,0,0,0) && s.durationMs);
+  const sessionCount = state.signals.filter(s => s.type === 'session' && s.timestamp > new Date().setHours(0, 0, 0, 0)).length;
+  const sessions = state.signals.filter(s => s.type === 'session' && s.timestamp > new Date().setHours(0, 0, 0, 0) && s.durationMs);
   const avgDurationMs = sessions.length ? sessions.reduce((acc, s) => acc + (s.durationMs || 0), 0) / sessions.length : 0;
   const avgDuration = Math.round(avgDurationMs / (1000 * 60));
-  
+
   return `
 - Stress score right now: ${Math.round(state.stressScore)}/100
 - Pickups in last hour: ${state.pickupsLastHour}
@@ -64,25 +64,25 @@ export const getLocalFallbackResponse = (userMessage: string, customTriggers?: s
 };
 
 export const getAuraChatResponse = async (
-  history: { role: 'user' | 'model', parts: {text: string}[] }[],
+  history: { role: 'user' | 'model', parts: { text: string }[] }[],
   message: string,
   forceRuleBased?: boolean
 ) => {
   // 🚨 Crisis Interceptor: Detects keywords related to self-harm or suicide
   const lowerMsg = message.toLowerCase();
   const crisisKeywords = [
-    'suicide', 'self-harm', 'kill myself', 'hurt myself', 'end my life', 'want to die', 
-    'harm myself', 'cutting myself', 'ending my life', 'better off dead', 'don\'t want to live', 
+    'suicide', 'self-harm', 'kill myself', 'hurt myself', 'end my life', 'want to die',
+    'harm myself', 'cutting myself', 'ending my life', 'better off dead', 'don\'t want to live',
     'wanna die', 'suicidal'
   ];
 
   const isCrisis = crisisKeywords.some(keyword => lowerMsg.includes(keyword));
   if (isCrisis) {
     return "It sounds like you're going through a very difficult time right now. Please know that you are not alone, and there is support available. I want to encourage you to connect with someone who can help right now:\n\n" +
-           "📞 Suicide & Crisis Lifeline: Call or text 988 (Available 24/7, free and confidential)\n\n" +
-           "💬 Crisis Text Line: Text HOME to 741741\n\n" +
-           "🚨 Emergency Services: Call 911 (or your local emergency number)\n\n" +
-           "Please reach out to them. They have people ready to listen and support you.";
+      "📞 Suicide & Crisis Lifeline: Call 0179787232 or text 988 (Available 24/7, free and confidential)\n\n" +
+      "💬 Crisis Text Line: Text HOME to 741741\n\n" +
+      "🚨 Emergency Services: Call 911 (or your local emergency number)\n\n" +
+      "Please reach out to them. They have people ready to listen and support you.";
   }
 
   // If presentation controls or toggle forces Rule-Based mode
@@ -105,7 +105,7 @@ Never be preachy. Be warm, curious, human.
 Offer to help them in the moment. Short responses under 3 sentences unless 
 they ask for more.
 `;
-  const model = genAI.getGenerativeModel({ 
+  const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-lite",
     systemInstruction: systemPrompt
   });
