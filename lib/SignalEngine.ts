@@ -255,33 +255,30 @@ export const useSignalEngine = () => {
         await buildAndSaveBaseline();
       }
     } else if (!isNowActive && appState.current === 'active') {
-      // Backgrounding
+      // Backgrounding (simulates going outside the app, e.g. surfing Instagram)
       if (!store.isDemoMode) {
         demoTimeout.current = setTimeout(async () => {
+          // Send doomscroll interception system notification
           await Notifications.scheduleNotificationAsync({
             content: {
               title: "⚠️ Doomscroll Interception",
-              body: "We noticed you've been surfing Instagram late at night. Tap here to take a breathing pause. 🪷",
+              body: "You've been on Instagram for 10 seconds. Let's take a breathing break.",
               sound: true,
             },
             trigger: null,
           });
 
-          // Spike the stress score and log the late-night Instagram doomscrolling triggers in the store
-          const currentTriggers = useAuraStore.getState().lastAnalysis?.triggers || [];
-          const newTriggers = Array.from(new Set([...currentTriggers, 'Playing phone constantly while charging late at night (High Stress)']));
-          
+          // Inject elevated stress and the doomscrolling trigger into the store
+          const freshStore = useAuraStore.getState();
+          freshStore.setStressScore(72);
           useAuraStore.setState({
-            stressScore: 78,
             lastAnalysis: {
-              score: 78,
-              deviationScore: 78,
-              triggers: newTriggers,
+              score: 72,
+              deviationScore: 72,
+              triggers: ['Late night scrolling while still (in-bed scrolling)']
             } as any
           });
-
-          useAuraStore.getState().setShowNudgeBanner(true);
-        }, 10000); // 10 seconds of background doomscrolling
+        }, 10000); // Trigger exactly at 10s of surfing in the background
       }
 
       // Always read fresh state to avoid stale currentSessionStart

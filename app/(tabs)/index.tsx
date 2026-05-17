@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, getGreeting, getStressLabel, getStressColor } from '../../constants/colors';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Notifications from 'expo-notifications';
 
 import { useRouter } from 'expo-router';
 
@@ -54,7 +55,6 @@ export default function Home() {
       setTakeoverTriggered(false);
     }
   }, [hasLateNightStress]);
-
 
   // Breathing Box Timer
   useEffect(() => {
@@ -454,6 +454,7 @@ export default function Home() {
                   </Text>
                 </TouchableOpacity>
 
+
               </View>
             </GlassCard>
           </View>
@@ -473,6 +474,7 @@ export default function Home() {
 
         </Animated.View>
       </ScrollView>
+
 
 
       {/* Absolute Takeover Interceptor Overlay (Instagram Taking Over Simulation) */}
