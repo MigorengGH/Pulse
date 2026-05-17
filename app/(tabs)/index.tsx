@@ -356,6 +356,7 @@ export default function Home() {
       </ScrollView>
 
       {/* Absolute Takeover Interceptor Overlay (Instagram Taking Over Simulation) */}
+      {/* Absolute Takeover Interceptor Overlay */}
       {showTakeover && (
         <View style={{
           position: 'absolute',
@@ -366,167 +367,340 @@ export default function Home() {
           zIndex: 1000,
           backgroundColor: '#090D16',
         }}>
-          {/* Faded Mock Instagram Feed */}
-          <View style={{ opacity: 0.12, flex: 1, paddingHorizontal: 20, paddingTop: 60 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: 'bold', fontFamily: 'serif' }}>Instagram</Text>
-              <View style={{ flexDirection: 'row', gap: 20 }}>
-                <Ionicons name="heart-outline" size={24} color="#FFFFFF" />
-                <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFFFFF" />
-              </View>
-            </View>
-            <View style={{ width: '100%', height: 280, backgroundColor: '#1E293B', borderRadius: 16, justifyContent: 'center', alignItems: 'center' }}>
-              <Ionicons name="image-outline" size={64} color="#334155" />
-            </View>
-            <Text style={{ color: '#FFFFFF', marginTop: 16, fontWeight: 'bold', fontFamily: 'PlusJakartaSans_700Bold' }}>insta_scroller_99</Text>
-            <Text style={{ color: '#94A3B8', marginTop: 6, fontFamily: 'PlusJakartaSans_400Regular' }}>Endless scrolling late at night...</Text>
-          </View>
-
-          {/* Intrusive Premium Intervention Card */}
-          <BlurView intensity={80} tint="dark" style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: 'center',
-            padding: 24,
-          }}>
-            <View style={{ 
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              borderRadius: 32,
-              padding: 28,
-              borderWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.1)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.5,
-              shadowRadius: 24,
-              elevation: 10,
-              alignItems: 'center',
+          {isErraticSwipe ? (
+            /* 1. ERGONOMICS & BIO-SENSORY AGITATION INTERVENTION */
+            <BlurView intensity={90} tint="dark" style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              justifyContent: 'center',
+              padding: 24,
             }}>
-              {/* Alert Header */}
               <View style={{ 
-                width: 56, 
-                height: 56, 
-                borderRadius: 28, 
-                backgroundColor: 'rgba(239, 68, 68, 0.15)', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: '#EF4444',
-                marginBottom: 16
+                backgroundColor: 'rgba(11, 19, 43, 0.96)',
+                borderRadius: 32,
+                padding: 28,
+                borderWidth: 1.5,
+                borderColor: 'rgba(56, 189, 248, 0.3)', // Soothing Sky Blue representing bio-electricity
+                shadowColor: '#38bdf8',
+                shadowOffset: { width: 0, height: 12 },
+                shadowOpacity: 0.3,
+                shadowRadius: 24,
+                elevation: 10,
+                alignItems: 'center',
               }}>
-                <Ionicons name="shield-half" size={28} color="#EF4444" />
-              </View>
-              <Text style={{ color: '#FFFFFF', fontSize: 22, fontFamily: 'PlusJakartaSans_800ExtraBold', textAlign: 'center' }}>
-                Digital Intervention
-              </Text>
-              <Text style={{ color: '#EF4444', fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>
-                {isErraticSwipe ? "Biometric Agitation Detected" : "Late Night Scrolling"}
-              </Text>
-
-              {/* Dynamic Behavioral Feedback Comment */}
-              <Text style={{ 
-                color: '#CBD5E1', 
-                fontSize: 14, 
-                fontFamily: 'PlusJakartaSans_500Medium', 
-                textAlign: 'center', 
-                lineHeight: 22, 
-                marginTop: 16,
-                marginBottom: 12
-              }}>
-                {takeoverComment}
-              </Text>
-
-              {/* Animated Box Breathing Circle */}
-              <View style={{ alignItems: 'center', marginVertical: 20 }}>
-                <View style={{
-                  width: 170,
-                  height: 170,
-                  alignItems: 'center',
+                {/* Biometric Shield/Wave Icon */}
+                <View style={{ 
+                  width: 64, 
+                  height: 64, 
+                  borderRadius: 32, 
+                  backgroundColor: 'rgba(56, 189, 248, 0.15)', 
+                  alignItems: 'center', 
                   justifyContent: 'center',
+                  borderWidth: 1.5,
+                  borderColor: '#38bdf8',
+                  marginBottom: 16
                 }}>
-                  {/* Glowing Animated Outer Ring */}
-                  <View style={{
-                    position: 'absolute',
-                    width: circleSize,
-                    height: circleSize,
-                    borderRadius: circleSize / 2,
-                    backgroundColor: circleColor,
-                    opacity: 0.12,
-                  }} />
-                  
-                  {/* Solid Interactive Core */}
-                  <View style={{
-                    width: circleSize - 24,
-                    height: circleSize - 24,
-                    borderRadius: (circleSize - 24) / 2,
-                    backgroundColor: circleColor,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    shadowColor: circleColor,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.4,
-                    shadowRadius: 10,
-                    elevation: 6,
-                  }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 15, fontFamily: 'PlusJakartaSans_800ExtraBold', textTransform: 'uppercase' }}>
-                      {breathState}
-                    </Text>
-                    <Text style={{ color: '#FFFFFF', fontSize: 20, fontFamily: 'PlusJakartaSans_800ExtraBold', marginTop: 2 }}>
-                      {secondsLeft}s
-                    </Text>
-                  </View>
+                  <Ionicons name="pulse" size={32} color="#38bdf8" />
                 </View>
                 
-                <Text style={{ color: '#94A3B8', fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 12 }}>
-                  {breathsCompleted > 0 
-                    ? `✓ Cycle Complete! Ready to reflect.` 
-                    : "Follow along to calm your nervous system..."}
+                <Text style={{ color: '#FFFFFF', fontSize: 24, fontFamily: 'PlusJakartaSans_800ExtraBold', textAlign: 'center' }}>
+                  Nervous System Intercept
                 </Text>
-              </View>
+                
+                <Text style={{ color: '#38bdf8', fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 2, marginTop: 4 }}>
+                  Frantic Swipe Motion Detected
+                </Text>
 
-              {/* Interactive Decisions */}
-              <View style={{ width: '100%', gap: 12, marginTop: 8 }}>
-                <TouchableOpacity
-                  onPress={handleCloseApp}
-                  style={{
-                    backgroundColor: Colors.accent,
-                    borderRadius: 16,
-                    paddingVertical: 14,
+                <Text style={{ 
+                  color: '#CBD5E1', 
+                  fontSize: 14, 
+                  fontFamily: 'PlusJakartaSans_500Medium', 
+                  textAlign: 'center', 
+                  lineHeight: 22, 
+                  marginTop: 18,
+                  marginBottom: 8
+                }}>
+                  Our on-device model identified erratic, rapid swiping and high flick velocity. This subconscious action is a physical trigger that releases cortisol and elevates your resting heart rate.
+                </Text>
+
+                {/* Grounding instruction */}
+                <View style={{ 
+                  backgroundColor: 'rgba(56, 189, 248, 0.08)', 
+                  borderRadius: 16, 
+                  padding: 12, 
+                  borderWidth: 1, 
+                  borderColor: 'rgba(56, 189, 248, 0.15)', 
+                  marginVertical: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10
+                }}>
+                  <Ionicons name="finger-print-outline" size={20} color="#38bdf8" />
+                  <Text style={{ color: '#E2E8F0', fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', flex: 1 }}>
+                    Place your finger gently on the circle below to ground your focus.
+                  </Text>
+                </View>
+
+                {/* Animated Box Breathing Circle (Soothing Teal & Sky Blue style) */}
+                <View style={{ alignItems: 'center', marginVertical: 16 }}>
+                  <View style={{
+                    width: 170,
+                    height: 170,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    shadowColor: Colors.accent,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    elevation: 4,
-                  }}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>
-                    Close Instagram & Go to Bed 🌙
+                  }}>
+                    {/* Glowing Animated Outer Ring */}
+                    <View style={{
+                      position: 'absolute',
+                      width: circleSize,
+                      height: circleSize,
+                      borderRadius: circleSize / 2,
+                      backgroundColor: '#38bdf8',
+                      opacity: 0.15,
+                    }} />
+                    
+                    {/* Solid Interactive Core */}
+                    <View style={{
+                      width: circleSize - 24,
+                      height: circleSize - 24,
+                      borderRadius: (circleSize - 24) / 2,
+                      backgroundColor: '#0F172A',
+                      borderWidth: 3,
+                      borderColor: '#38bdf8',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: '#38bdf8',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.4,
+                      shadowRadius: 10,
+                      elevation: 6,
+                    }}>
+                      <Ionicons name="leaf-outline" size={24} color="#38bdf8" style={{ marginBottom: 4 }} />
+                      <Text style={{ color: '#FFFFFF', fontSize: 13, fontFamily: 'PlusJakartaSans_800ExtraBold', textTransform: 'uppercase', letterSpacing: 1 }}>
+                        {breathState}
+                      </Text>
+                      <Text style={{ color: '#FFFFFF', fontSize: 22, fontFamily: 'PlusJakartaSans_800ExtraBold', marginTop: 2 }}>
+                        {secondsLeft}s
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={{ color: '#94A3B8', fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 12 }}>
+                    {breathsCompleted > 0 
+                      ? `✓ Nervous System Stabilized! Ready to reflect.` 
+                      : "Synchronize your breathing with the pulse..."}
                   </Text>
-                </TouchableOpacity>
+                </View>
 
-                <TouchableOpacity
-                  onPress={handleContinueAnyway}
-                  style={{
-                    borderRadius: 16,
-                    paddingVertical: 12,
-                    alignItems: 'center',
+                {/* Interactive Decisions */}
+                <View style={{ width: '100%', gap: 12, marginTop: 8 }}>
+                  <TouchableOpacity
+                    onPress={handleCloseApp}
+                    style={{
+                      backgroundColor: '#38bdf8',
+                      borderRadius: 16,
+                      paddingVertical: 14,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: '#38bdf8',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 8,
+                      elevation: 4,
+                    }}
+                  >
+                    <Text style={{ color: '#0F172A', fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                      Take a 5-Minute Mindful Break 🧘
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleContinueAnyway}
+                    style={{
+                      borderRadius: 16,
+                      paddingVertical: 12,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: 'rgba(56, 189, 248, 0.3)',
+                    }}
+                  >
+                    <Text style={{ color: '#94A3B8', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                      Continue anyway
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </BlurView>
+          ) : (
+            /* 2. LATE NIGHT INSTAGRAM DOOMSCROLLING OVERLAY */
+            <>
+              {/* Faded Mock Instagram Feed */}
+              <View style={{ opacity: 0.12, flex: 1, paddingHorizontal: 20, paddingTop: 60 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: 'bold', fontFamily: 'serif' }}>Instagram</Text>
+                  <View style={{ flexDirection: 'row', gap: 20 }}>
+                    <Ionicons name="heart-outline" size={24} color="#FFFFFF" />
+                    <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFFFFF" />
+                  </View>
+                </View>
+                <View style={{ width: '100%', height: 280, backgroundColor: '#1E293B', borderRadius: 16, justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="image-outline" size={64} color="#334155" />
+                </View>
+                <Text style={{ color: '#FFFFFF', marginTop: 16, fontWeight: 'bold', fontFamily: 'PlusJakartaSans_700Bold' }}>insta_scroller_99</Text>
+                <Text style={{ color: '#94A3B8', marginTop: 6, fontFamily: 'PlusJakartaSans_400Regular' }}>Endless scrolling late at night...</Text>
+              </View>
+
+              {/* Intrusive Premium Intervention Card */}
+              <BlurView intensity={80} tint="dark" style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                justifyContent: 'center',
+                padding: 24,
+              }}>
+                <View style={{ 
+                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                  borderRadius: 32,
+                  padding: 28,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 12 },
+                  shadowOpacity: 0.5,
+                  shadowRadius: 24,
+                  elevation: 10,
+                  alignItems: 'center',
+                }}>
+                  {/* Alert Header */}
+                  <View style={{ 
+                    width: 56, 
+                    height: 56, 
+                    borderRadius: 28, 
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)', 
+                    alignItems: 'center', 
                     justifyContent: 'center',
                     borderWidth: 1,
-                    borderColor: 'rgba(255, 255, 255, 0.15)',
-                  }}
-                >
-                  <Text style={{ color: '#94A3B8', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
-                    Continue using Instagram anyway
+                    borderColor: '#EF4444',
+                    marginBottom: 16
+                  }}>
+                    <Ionicons name="shield-half" size={28} color="#EF4444" />
+                  </View>
+                  <Text style={{ color: '#FFFFFF', fontSize: 22, fontFamily: 'PlusJakartaSans_800ExtraBold', textAlign: 'center' }}>
+                    Digital Intervention
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </BlurView>
+                  <Text style={{ color: '#EF4444', fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>
+                    Late Night Scrolling
+                  </Text>
+
+                  {/* Dynamic Behavioral Feedback Comment */}
+                  <Text style={{ 
+                    color: '#CBD5E1', 
+                    fontSize: 14, 
+                    fontFamily: 'PlusJakartaSans_500Medium', 
+                    textAlign: 'center', 
+                    lineHeight: 22, 
+                    marginTop: 16,
+                    marginBottom: 12
+                  }}>
+                    {takeoverComment}
+                  </Text>
+
+                  {/* Animated Box Breathing Circle */}
+                  <View style={{ alignItems: 'center', marginVertical: 20 }}>
+                    <View style={{
+                      width: 170,
+                      height: 170,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      {/* Glowing Animated Outer Ring */}
+                      <View style={{
+                        position: 'absolute',
+                        width: circleSize,
+                        height: circleSize,
+                        borderRadius: circleSize / 2,
+                        backgroundColor: circleColor,
+                        opacity: 0.12,
+                      }} />
+                      
+                      {/* Solid Interactive Core */}
+                      <View style={{
+                        width: circleSize - 24,
+                        height: circleSize - 24,
+                        borderRadius: (circleSize - 24) / 2,
+                        backgroundColor: circleColor,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        shadowColor: circleColor,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.4,
+                        shadowRadius: 10,
+                        elevation: 6,
+                      }}>
+                        <Text style={{ color: '#FFFFFF', fontSize: 15, fontFamily: 'PlusJakartaSans_800ExtraBold', textTransform: 'uppercase' }}>
+                          {breathState}
+                        </Text>
+                        <Text style={{ color: '#FFFFFF', fontSize: 20, fontFamily: 'PlusJakartaSans_800ExtraBold', marginTop: 2 }}>
+                          {secondsLeft}s
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <Text style={{ color: '#94A3B8', fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 12 }}>
+                      {breathsCompleted > 0 
+                        ? `✓ Cycle Complete! Ready to reflect.` 
+                        : "Follow along to calm your nervous system..."}
+                    </Text>
+                  </View>
+
+                  {/* Interactive Decisions */}
+                  <View style={{ width: '100%', gap: 12, marginTop: 8 }}>
+                    <TouchableOpacity
+                      onPress={handleCloseApp}
+                      style={{
+                        backgroundColor: Colors.accent,
+                        borderRadius: 16,
+                        paddingVertical: 14,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        shadowColor: Colors.accent,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 4,
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                        Close Instagram & Go to Bed 🌙
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={handleContinueAnyway}
+                      style={{
+                        borderRadius: 16,
+                        paddingVertical: 12,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
+                      }}
+                    >
+                      <Text style={{ color: '#94A3B8', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                        Continue using Instagram anyway
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </BlurView>
+            </>
+          )}
         </View>
       )}
     </View>
