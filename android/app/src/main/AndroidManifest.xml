@@ -33,11 +33,6 @@
     </activity>
     <service
       android:name=".overlay.PulseOverlayService"
-      android:exported="false"
-      android:foregroundServiceType="specialUse">
-      <property
-        android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-        android:value="digitalWellness"/>
-    </service>
+      android:exported="false"/>
   </application>
 </manifest>
