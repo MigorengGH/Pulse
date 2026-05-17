@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, ScrollView, Animated, Dimensions } from 'react-native';
 import Orb from '../../components/Orb';
-import DeviationRing from '../../components/DeviationRing';
 import BaselineProgress from '../../components/BaselineProgress';
 import { useAuraStore } from '../../store/useAuraStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,17 +52,6 @@ export default function Home() {
           colors={['#f8fafc', '#e2e8f0', '#f8fafc']}
           style={{ flex: 1 }}
         />
-        <Animated.View style={{
-          position: 'absolute',
-          top: '10%',
-          right: '-20%',
-          width: width * 0.8,
-          height: width * 0.8,
-          borderRadius: width * 0.4,
-          backgroundColor: stressColor,
-          opacity: 0.15,
-          transform: [{ scale: 1.5 }],
-        }} />
       </View>
 
       <ScrollView
@@ -97,31 +85,17 @@ export default function Home() {
 
           {/* Main Status Area */}
           <View style={{ alignItems: 'center', marginTop: 10 }}>
-            {state.baseline ? (
-              <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
-                <DeviationRing score={state.deviationScore || state.stressScore} size={280} strokeWidth={4} />
-                <View style={{ position: 'absolute', alignItems: 'center' }}>
-                   <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>
-                    Current State
-                  </Text>
-                  <Text style={{ color: Colors.textPrimary, fontSize: 28, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4 }}>
-                    {label}
-                  </Text>
-                </View>
+            <View style={{ paddingVertical: 20 }}>
+              <Orb stressScore={state.baseline ? (state.deviationScore || state.stressScore) : state.stressScore} />
+              <View style={{ alignItems: 'center', marginTop: 12 }}>
+                 <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                  {state.baseline ? 'Current State' : 'Aura Pulse'}
+                </Text>
+                <Text style={{ color: Colors.textPrimary, fontSize: 26, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4 }}>
+                  {label}
+                </Text>
               </View>
-            ) : (
-              <View style={{ paddingVertical: 20 }}>
-                <Orb stressScore={state.stressScore} />
-                <View style={{ alignItems: 'center', marginTop: 20 }}>
-                   <Text style={{ color: Colors.textMuted, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>
-                    Aura Pulse
-                  </Text>
-                  <Text style={{ color: Colors.textPrimary, fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold', marginTop: 4 }}>
-                    {label}
-                  </Text>
-                </View>
-              </View>
-            )}
+            </View>
           </View>
 
           {/* Stats Row */}
@@ -134,50 +108,54 @@ export default function Home() {
           {/* Baseline Progress */}
           {!state.baseline && (
             <View style={{ paddingHorizontal: 24, marginTop: 24 }}>
-               <GlassCard style={{ padding: 24 }}>
-                <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 12 }}>
-                  Baseline Collection
-                </Text>
-                <BaselineProgress daysCollected={state.daysOfData} />
-                <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_400Regular', marginTop: 12, lineHeight: 18 }}>
-                  Aura is learning your unique behavioral patterns. Your baseline will be ready in {Math.max(0, 7 - state.daysOfData)} days.
-                </Text>
+               <GlassCard>
+                <View style={{ padding: 24 }}>
+                  <Text style={{ color: Colors.textPrimary, fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', marginBottom: 12 }}>
+                    Baseline Collection
+                  </Text>
+                  <BaselineProgress daysCollected={state.daysOfData} />
+                  <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_400Regular', marginTop: 12, lineHeight: 18 }}>
+                    Aura is learning your unique behavioral patterns. Your baseline will be ready in {Math.max(0, 7 - state.daysOfData)} days.
+                  </Text>
+                </View>
               </GlassCard>
             </View>
           )}
 
           {/* Last Nudge / Insights */}
           <View style={{ paddingHorizontal: 24, marginTop: 24 }}>
-            <GlassCard style={{ padding: 24 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ color: Colors.accent, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                  AI COMPANION
-                </Text>
-                {lastNudgeAge && <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium' }}>{lastNudgeAge}</Text>}
-              </View>
-              
-              <Text style={{ color: Colors.textPrimary, fontSize: 17, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 26, marginBottom: 16 }}>
-                {lastNudge ? lastNudge.message : "Aura is currently observing your digital rhythm to provide contextual mindfulness nudges."}
-              </Text>
-
-              {state.lastAnalysis && state.lastAnalysis.triggers.length > 0 && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {state.lastAnalysis.triggers.map((trigger, i) => (
-                    <View key={i} style={{ 
-                      backgroundColor: 'rgba(0,0,0,0.05)', 
-                      paddingHorizontal: 12, 
-                      paddingVertical: 6, 
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: 'rgba(0,0,0,0.08)'
-                    }}>
-                      <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
-                        {trigger}
-                      </Text>
-                    </View>
-                  ))}
+            <GlassCard>
+              <View style={{ padding: 24 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <Text style={{ color: Colors.accent, fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                    AI COMPANION
+                  </Text>
+                  {lastNudgeAge && <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium' }}>{lastNudgeAge}</Text>}
                 </View>
-              )}
+                
+                <Text style={{ color: Colors.textPrimary, fontSize: 17, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 26, marginBottom: 16 }}>
+                  {lastNudge ? lastNudge.message : "Aura is currently observing your digital rhythm to provide contextual mindfulness nudges."}
+                </Text>
+
+                {state.lastAnalysis && state.lastAnalysis.triggers.length > 0 && (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {state.lastAnalysis.triggers.map((trigger, i) => (
+                      <View key={i} style={{ 
+                        backgroundColor: 'rgba(0,0,0,0.05)', 
+                        paddingHorizontal: 12, 
+                        paddingVertical: 6, 
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: 'rgba(0,0,0,0.08)'
+                      }}>
+                        <Text style={{ color: Colors.textSecondary, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                          {trigger}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
             </GlassCard>
           </View>
 

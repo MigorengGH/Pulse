@@ -1,80 +1,64 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, View, Text, Easing, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
+import { getStressColor } from '../constants/colors';
 
 interface OrbProps {
   stressScore: number;
 }
 
 export default function Orb({ stressScore }: OrbProps) {
-  const pulseScale = useRef(new Animated.Value(1)).current;
-  const rotation = useRef(new Animated.Value(0)).current;
+  const breatheAnim = useRef(new Animated.Value(1)).current;
+  const color = getStressColor(stressScore);
 
   useEffect(() => {
-    const duration = stressScore > 60 ? 1500 : stressScore > 30 ? 2500 : 4000;
-    
-    // Breathing animation
-    const pulse = Animated.loop(
+    // Extremely slow, deep breathing cycle (4 seconds in, 4 seconds out)
+    const breathe = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseScale, { toValue: 1.15, duration, easing: Easing.bezier(0.4, 0, 0.2, 1), useNativeDriver: true }),
-        Animated.timing(pulseScale, { toValue: 1.0, duration, easing: Easing.bezier(0.4, 0, 0.2, 1), useNativeDriver: true }),
+        Animated.timing(breatheAnim, { 
+          toValue: 1.15, 
+          duration: 4000, 
+          easing: Easing.inOut(Easing.sin), 
+          useNativeDriver: true 
+        }),
+        Animated.timing(breatheAnim, { 
+          toValue: 1.0, 
+          duration: 4000, 
+          easing: Easing.inOut(Easing.sin), 
+          useNativeDriver: true 
+        }),
       ])
     );
-
-    // Subtle rotation
-    const rotate = Animated.loop(
-      Animated.timing(rotation, { toValue: 1, duration: 20000, easing: Easing.linear, useNativeDriver: true })
-    );
-
-    pulse.start();
-    rotate.start();
-
-    return () => {
-      pulse.stop();
-      rotate.stop();
-    };
-  }, [stressScore]);
-
-  const spin = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  const orbColor = stressScore > 60 ? '#FB7185' : stressScore > 30 ? '#FB923C' : '#57f1db';
+    breathe.start();
+    return () => breathe.stop();
+  }, [stressScore]); // Added dependency
 
   return (
     <View style={styles.container}>
-      {/* Outer diffuse glow */}
-      <Animated.View style={[styles.glow, {
-        backgroundColor: orbColor,
-        opacity: 0.15,
-        transform: [{ scale: Animated.multiply(pulseScale, 1.4) }],
-      }]} />
+      {/* A very faint, larger diffuse aura behind it */}
+      <Animated.View style={[
+        styles.diffuseAura,
+        {
+          backgroundColor: color,
+          transform: [{ scale: Animated.multiply(breatheAnim, 1.2) }],
+        }
+      ]} />
 
-      {/* Rotating Background Mesh */}
-      <Animated.View style={[styles.meshContainer, { transform: [{ rotate: spin }, { scale: pulseScale }] }]}>
-        <LinearGradient
-          colors={[orbColor, 'transparent', orbColor]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.mesh}
-        />
-      </Animated.View>
-
-      {/* Main Glass Orb */}
-      <Animated.View style={[styles.orbFrame, { transform: [{ scale: pulseScale }] }]}>
-        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill}>
-          <LinearGradient
-            colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.05)']}
-            style={StyleSheet.absoluteFill}
-          />
-        </BlurView>
-        <View style={[styles.innerBorder, { borderColor: 'rgba(255,255,255,0.3)' }]} />
-        
+      {/* The main calm circle */}
+      <Animated.View style={[
+        styles.calmCircle,
+        {
+          backgroundColor: color,
+          transform: [{ scale: breatheAnim }],
+          shadowColor: color,
+        }
+      ]}>
         <View style={styles.content}>
-           <Text style={styles.pulseText}>AURA</Text>
-           <View style={[styles.indicator, { backgroundColor: orbColor }]} />
+           <Text style={styles.percentageText}>
+             {Math.round(stressScore)}<Text style={styles.percentSymbol}>%</Text>
+           </Text>
+           <Text style={styles.label}>
+             Aura
+           </Text>
         </View>
       </Animated.View>
     </View>
@@ -83,62 +67,53 @@ export default function Orb({ stressScore }: OrbProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: 240,
-    height: 240,
+    width: 220,
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  glow: {
+  calmCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.9,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    zIndex: 2,
+  },
+
+  diffuseAura: {
     position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-  },
-  meshContainer: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    opacity: 0.3,
-  },
-  mesh: {
-    flex: 1,
-    borderRadius: 110,
-  },
-  orbFrame: {
     width: 160,
     height: 160,
     borderRadius: 80,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  innerBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 80,
-    borderWidth: 0.5,
-    opacity: 0.5,
+    opacity: 0.15,
+    zIndex: 1,
   },
   content: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  pulseText: {
+  percentageText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'PlusJakartaSans_800ExtraBold',
-    letterSpacing: 4,
-    opacity: 0.9,
+    fontSize: 48,
+    fontFamily: 'PlusJakartaSans_400Regular', // Much softer, airy font
+    letterSpacing: -1.5,
   },
-  indicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 12,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
+  percentSymbol: {
+    fontSize: 20,
+    opacity: 0.8,
   },
+  label: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    letterSpacing: 3,
+    opacity: 0.7,
+    marginTop: 4,
+    textTransform: 'uppercase',
+  }
 });

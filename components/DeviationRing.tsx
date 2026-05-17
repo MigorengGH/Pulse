@@ -53,13 +53,6 @@ export default function DeviationRing({ score, size = 160, strokeWidth = 8 }: De
           strokeDashoffset={strokeDashoffset}
         />
       </Svg>
-      {/* Center */}
-      <View style={{ position: 'absolute', alignItems: 'center' }}>
-        <Text style={{ color, fontSize: 36, fontWeight: '800', letterSpacing: -1 }}>
-          {Math.round(score)}
-        </Text>
-        <Text style={{ color: Colors.textMuted, fontSize: 11, fontWeight: '600' }}>/ 100</Text>
-      </View>
     </View>
   );
 }
