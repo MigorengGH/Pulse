@@ -6,6 +6,7 @@ import { Accelerometer } from 'expo-sensors';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundTask from 'expo-background-task';
 import { useAuraStore } from '../store/useAuraStore';
+import { useRouter } from 'expo-router';
 import type { SignalEvent } from '../types';
 import { calculateStressScore } from './StressCalculator';
 import { loadSignals, saveSignals, loadBaseline, loadNudges, loadPreferences, countDaysOfData } from './storage';
@@ -62,9 +63,18 @@ TaskManager.defineTask(BACKGROUND_HEARTBEAT_TASK, async () => {
         store.setLastNudgeTime(now);
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: "Mindful Break Needed?",
-            body: "Your phone behavior suggests elevated stress. Tap here for a quick pause.",
+            title: "🌿 Pulse — Stress Detected",
+            body: "Your phone behavior suggests elevated stress. Tap here for a quick breathing pause.",
             sound: true,
+            data: { screen: '/(modals)/nudge' },
+            ...({
+              android: {
+                channelId: 'pulse-stress',
+                color: '#F59E0B',
+                priority: 'high',
+                vibrate: true,
+              }
+            }),
           },
           trigger: null,
         });
@@ -84,9 +94,37 @@ export const useSignalEngine = () => {
   const demoTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Reliable 5-minute analysis timer — timestamp-based, not modulo
   const lastAnalysisTime = useRef<number>(0);
+  const router = useRouter();
 
   useEffect(() => {
-    Notifications.requestPermissionsAsync();
+    // ─── Android: Create HIGH importance notification channel ─────────────────
+    // This is REQUIRED for heads-up banners to appear on top of other apps on Android.
+    // Without this, notifications on Android are silent and go to the tray only.
+    Notifications.setNotificationChannelAsync('pulse-doomscroll', {
+      name: 'Doomscroll Interception',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#2DD4BF',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: false,
+      description: 'Alerts when you spend too long on social media',
+    });
+
+    Notifications.setNotificationChannelAsync('pulse-stress', {
+      name: 'Stress Alerts',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#F59E0B',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: false,
+      description: 'Nudges when stress patterns are detected',
+    });
+
+    // ─── Request notification permission (Android 13+ requires explicit ask) ─
+    Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowBadge: false, allowSound: true } });
+
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -198,12 +236,30 @@ export const useSignalEngine = () => {
       }
     }, 60 * 1000);
 
+    // ─── Notification Tap Handler ────────────────────────────────────────────
+    // When user taps the heads-up notification while on Instagram,
+    // this brings them BACK into Pulse and opens the breathing screen.
+    const notifResponseSub = Notifications.addNotificationResponseReceivedListener(response => {
+      const screen = response.notification.request.content.data?.screen;
+      if (screen === '/(modals)/nudge') {
+        // Small delay to let the app fully foreground before navigating
+        setTimeout(() => {
+          try {
+            router.push('/(modals)/nudge');
+          } catch (e) {
+            console.warn('[Pulse] Could not navigate to nudge screen:', e);
+          }
+        }, 500);
+      }
+    });
+
     return () => {
       subscription.remove();
       clearInterval(batteryInterval);
       clearInterval(stressInterval);
       accelSubscription.remove();
       batterySubscription.remove();
+      notifResponseSub.remove();
     };
   }, []);
 
@@ -255,15 +311,31 @@ export const useSignalEngine = () => {
         await buildAndSaveBaseline();
       }
     } else if (!isNowActive && appState.current === 'active') {
-      // Backgrounding (simulates going outside the app, e.g. surfing Instagram)
+      // Backgrounding — user left Pulse (e.g. opened Instagram)
       if (!store.isDemoMode) {
         demoTimeout.current = setTimeout(async () => {
-          // Send doomscroll interception system notification
+          // ─── Fire a MAX-importance heads-up notification ───────────────────
+          // On Android, this will slide in from the TOP of the screen,
+          // appearing on top of any app the user currently has open (e.g. Instagram).
+          // The user can tap it to be taken directly back into Pulse.
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: "⚠️ Doomscroll Interception",
-              body: "You've been on Instagram for 10 seconds. Let's take a breathing break.",
+              title: "🌿 Pulse — Mindful Check-in",
+              body: "You've been scrolling for 10 seconds. Tap to take a 10-second breathing break.",
               sound: true,
+              // Android-specific: set category for actionable notification
+              categoryIdentifier: 'doomscroll',
+              data: { screen: '/(modals)/nudge' },
+              // Android channel — MUST match the channel ID created above
+              ...({
+                android: {
+                  channelId: 'pulse-doomscroll',
+                  color: '#2DD4BF',
+                  priority: 'max',
+                  vibrate: true,
+                  sticky: false,
+                }
+              }),
             },
             trigger: null,
           });
@@ -278,7 +350,7 @@ export const useSignalEngine = () => {
               triggers: ['Late night scrolling while still (in-bed scrolling)']
             } as any
           });
-        }, 10000); // Trigger exactly at 10s of surfing in the background
+        }, 10000); // Fires exactly 10 seconds after leaving Pulse
       }
 
       // Always read fresh state to avoid stale currentSessionStart
