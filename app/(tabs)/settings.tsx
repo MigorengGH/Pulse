@@ -18,6 +18,11 @@ export default function SettingsScreen() {
   const [showDemoButton, setShowDemoButton] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showPerMinute, setShowPerMinute] = useState(false);
+
+  const pickupsLastMinute = store.signals.filter(
+    (s) => s.type === 'pickup' && s.timestamp >= Date.now() - 60 * 1000
+  ).length;
 
   const handleResetOnboarding = async () => {
     Alert.alert(
@@ -94,7 +99,25 @@ export default function SettingsScreen() {
         <Divider />
         <Row label="Pickups today" value={store.pickupsToday.toString()} />
         <Divider />
-        <Row label="Pickups (last hour)" value={store.pickupsLastHour.toString()} />
+        <View style={styles.row}>
+          <View style={{ flex: 1, marginRight: 16 }}>
+            <Text style={styles.label}>{showPerMinute ? "Pickups (last minute)" : "Pickups (last hour)"}</Text>
+            <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>
+              Toggle to show rate per minute instead of per hour
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ color: Colors.textSecondary, fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold', marginRight: 16 }}>
+              {showPerMinute ? pickupsLastMinute.toString() : store.pickupsLastHour.toString()}
+            </Text>
+            <Switch
+              value={showPerMinute}
+              onValueChange={setShowPerMinute}
+              trackColor={{ false: Colors.bgBorder, true: Colors.accent }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+        </View>
         <Divider />
         <View style={styles.row}>
           <Text style={styles.label}>Baseline</Text>
