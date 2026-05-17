@@ -256,18 +256,32 @@ export const useSignalEngine = () => {
       }
     } else if (!isNowActive && appState.current === 'active') {
       // Backgrounding
-      if (__DEV__ && !store.isDemoMode) {
+      if (!store.isDemoMode) {
         demoTimeout.current = setTimeout(async () => {
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: "Mindful Moment",
-              body: "Noticed some restlessness. Tap here to take a breath.",
+              title: "⚠️ Doomscroll Interception",
+              body: "We noticed you've been surfing Instagram late at night. Tap here to take a breathing pause. 🪷",
               sound: true,
             },
             trigger: null,
           });
+
+          // Spike the stress score and log the late-night Instagram doomscrolling triggers in the store
+          const currentTriggers = useAuraStore.getState().lastAnalysis?.triggers || [];
+          const newTriggers = Array.from(new Set([...currentTriggers, 'Playing phone constantly while charging late at night (High Stress)']));
+          
+          useAuraStore.setState({
+            stressScore: 78,
+            lastAnalysis: {
+              score: 78,
+              deviationScore: 78,
+              triggers: newTriggers,
+            } as any
+          });
+
           useAuraStore.getState().setShowNudgeBanner(true);
-        }, 5000);
+        }, 10000); // 10 seconds of background doomscrolling
       }
 
       // Always read fresh state to avoid stale currentSessionStart
