@@ -110,7 +110,8 @@ export const useSignalEngine = () => {
           console.log('[Background] Heartbeat task registered successfully!');
         }
       } catch (err) {
-        console.error('[Background] Failed to register task', err);
+        // Log as warning instead of error so it doesn't trigger a redbox in Expo Go
+        console.warn('[Background] Failed to register task. This is expected in Expo Go. Use EAS Build for background tasks.', err);
       }
     };
 

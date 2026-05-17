@@ -16,7 +16,7 @@ module.exports = {
     supportsTablet: true,
     bundleIdentifier: "com.mfahimi.pulse",
     infoPlist: {
-      UIBackgroundModes: ["processing"],
+      UIBackgroundModes: ["processing", "process"],
       BGTaskSchedulerPermittedIdentifiers: ["com.expo.modules.backgroundtask.processing"]
     }
   },
