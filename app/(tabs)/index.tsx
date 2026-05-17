@@ -100,9 +100,30 @@ export default function Home() {
 
           {/* Stats Row */}
           <View style={{ flexDirection: 'row', paddingHorizontal: 24, marginTop: 32, gap: 12 }}>
-            <StatCard iconName="phone-portrait-outline" label="Pickups" value={state.pickupsToday.toString()} />
+            <StatCard iconName="phone-portrait-outline" label="Total Pickups" value={state.pickupsToday.toString()} />
             <StatCard iconName="time-outline" label="Focus" value={totalScreenTime} />
             <StatCard iconName="moon-outline" label="Rest" value={state.insomniaSignal ? 'Late' : 'Steady'} />
+          </View>
+
+          {/* Device Status Bar */}
+          <View style={{ paddingHorizontal: 24, marginTop: 16 }}>
+            <GlassCard>
+              <View style={{ paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="phone-portrait-outline" size={18} color={state.appIsActive ? Colors.calm : Colors.textMuted} />
+                  <Text style={{ color: Colors.textPrimary, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                    Phone: {state.appIsActive ? '🟢 On the Phone' : '⚪ Idle'}
+                  </Text>
+                </View>
+                <View style={{ width: 1, height: 16, backgroundColor: Colors.bgBorder }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name={state.isCharging ? "flash" : "battery-dead"} size={18} color={state.isCharging ? Colors.high : Colors.textMuted} />
+                  <Text style={{ color: Colors.textPrimary, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                    Power: {state.isCharging ? '⚡ Charging' : '🔋 On Battery'}
+                  </Text>
+                </View>
+              </View>
+            </GlassCard>
           </View>
 
           {/* Baseline Progress */}

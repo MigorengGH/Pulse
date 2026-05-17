@@ -7,8 +7,15 @@ export const calculateStressScore = (): number => {
 
   let score = 20; // Lower base score
 
-  // ─── Pickup frequency (last hour) ──────────────────────────
-  if (state.pickupsLastHour > 12) {
+  const now = Date.now();
+  const pickupsLastMinute = state.signals.filter(
+    (s) => s.type === 'pickup' && s.timestamp >= now - 60 * 1000
+  ).length;
+
+  // ─── Pickup frequency (last hour or minute) ────────────────
+  if (pickupsLastMinute >= 5 || state.pickupsLastHour >= 5) {
+    score += 15; // Labeled as Stress
+  } else if (state.pickupsLastHour > 12) {
     score += 25;
   } else if (state.pickupsLastHour > 8) {
     score += 15;
@@ -46,6 +53,12 @@ export const calculateStressScore = (): number => {
   // ─── Ignored notifications ──────────────────────────────────
   if (state.ignoredNotificationsCount >= 3) {
     score += 10; // High uncleared notification count adds to stress index
+  }
+
+  // ─── Charging late night + playing phone constantly ────────
+  const isPlayingConstantly = sessionDuration > 15 || state.pickupsLastHour >= 5 || pickupsLastMinute >= 5;
+  if (state.isCharging && timeBucket === 'NIGHT' && isPlayingConstantly) {
+    score += 25; // High stress index penalty
   }
 
   // ─── Deviation awareness (if baseline exists) ──────────────

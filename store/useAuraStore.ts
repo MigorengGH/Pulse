@@ -14,6 +14,7 @@ interface AuraState {
   pickupsLastHour: number;
   lastPickupTime: number | null;
   ignoredNotificationsCount: number;
+  isCharging: boolean;
 
   // ─── Nudge ──────────────────────────────────────────────────
   lastNudgeTime: number | null;
@@ -53,6 +54,7 @@ interface AuraState {
   setOnboardingComplete: (complete: boolean) => void;
   setDaysOfData: (days: number) => void;
   setPreferences: (prefs: Partial<UserPreferences>) => void;
+  setIsCharging: (charging: boolean) => void;
   resetBaseline: () => void;
 }
 
@@ -67,6 +69,7 @@ export const useAuraStore = create<AuraState>((set) => ({
   pickupsLastHour: 0,
   lastPickupTime: null,
   ignoredNotificationsCount: 0,
+  isCharging: false,
   lastNudgeTime: null,
   showNudgeBanner: false,
   nudgeHistory: [],
@@ -105,5 +108,6 @@ export const useAuraStore = create<AuraState>((set) => ({
   setPreferences: (prefs) => set((state) => ({
     preferences: { ...state.preferences, ...prefs },
   })),
+  setIsCharging: (isCharging) => set({ isCharging }),
   resetBaseline: () => set({ baseline: null, deviationScore: 0, lastAnalysis: null }),
 }));

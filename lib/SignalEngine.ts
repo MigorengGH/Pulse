@@ -37,6 +37,7 @@ TaskManager.defineTask(BACKGROUND_HEARTBEAT_TASK, async () => {
     }
 
     const state = useAuraStore.getState();
+    state.setIsCharging(isCharging);
     if (newSignals.length > signals.length) {
       await saveSignals(newSignals);
       state.setSignals(newSignals);
@@ -246,6 +247,7 @@ export const useSignalEngine = () => {
   const checkBattery = async () => {
     const state = await Battery.getBatteryStateAsync();
     const isCharging = state === Battery.BatteryState.CHARGING || state === Battery.BatteryState.FULL;
+    store.setIsCharging(isCharging);
     const hour = new Date().getHours();
 
     // 11 PM to 5 AM

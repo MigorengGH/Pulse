@@ -83,6 +83,14 @@ export const analyzeCurrentState = async (): Promise<AnalysisResult> => {
     triggers.push('Rapid phone checking (restlessness)');
   }
 
+  const pickupsLastMinute = state.signals.filter(s => s.type === 'pickup' && s.timestamp >= now - 60 * 1000).length;
+
+  // 7b. Pickups = 5 (labeled as stress) (+15)
+  if (pickupsLastMinute >= 5 || state.pickupsLastHour >= 5) {
+    score += 15;
+    triggers.push('Elevated checks rate (5+ pickups per min/hour) - Labeled as Stress');
+  }
+
   // 8. Still and scrolling late at night (in-bed scrolling) (+15)
   if (timeBucket === 'NIGHT' && state.movementState === 'still') {
     score += 15;
@@ -93,6 +101,19 @@ export const analyzeCurrentState = async (): Promise<AnalysisResult> => {
   if (state.ignoredNotificationsCount >= 3) {
     score += 15;
     triggers.push('Multiple ignored notifications (withdrawal/avoidance)');
+  }
+
+  // 10. Charging late night and playing phone constantly (+20)
+  const hourNum = new Date(now).getHours();
+  const isLateNightHour = hourNum >= 23 || hourNum < 5;
+  let curSessionMins = 0;
+  if (state.currentSessionStart) {
+    curSessionMins = (now - state.currentSessionStart) / (1000 * 60);
+  }
+  const playingConstantly = curSessionMins > 15 || state.pickupsLastHour >= 5 || pickupsLastMinute >= 5;
+  if (state.isCharging && isLateNightHour && playingConstantly) {
+    score += 20;
+    triggers.push('Playing phone constantly while charging late at night (High Stress)');
   }
 
   // Cap at 100
