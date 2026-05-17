@@ -234,8 +234,6 @@ Respond with only the nudge message, nothing else.
 };
 
 export const generateWeeklyInsight = async (): Promise<string> => {
-  if (!geminiKey) return "This week has been a journey. Take a moment to reflect on how you've been feeling.";
-
   const state = useAuraStore.getState();
   const signals = state.signals;
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -254,6 +252,60 @@ export const generateWeeklyInsight = async (): Promise<string> => {
     dailyCounts[day] = (dailyCounts[day] || 0) + 1;
   });
   const mostActiveDay = Object.entries(dailyCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+  const getLocalWeeklyReflection = () => {
+    const score = state.stressScore;
+    const isRestless = totalPickups > 80 || avgDailyPickups > 12;
+    const isLateNighter = insomniaCount > 2 || state.insomniaSignal;
+    const isHeavyUser = totalScreenTimeMin > 1000;
+
+    const reflections = [
+      // 0: Stress + Heavy Late Night
+      `This week, your digital rhythm shows clear signs of sleep-time searching. Retiring to bed while keeping the screen active creates an artificial sun, keeping your nervous system in high gear. Consider introducing a hard 'no-screen' boundary 30 minutes before sleep to restore your natural rest cycles.`,
+      
+      // 1: High Stress + Restlessness
+      `Your pattern of checking the device frequently indicates a steady stream of micro-attentions. When stress rises, we often reach for the phone unconsciously as a quick escape, but this flick-checking actually maintains elevated cortisol levels. Next week, try designating 3 specific offline windows to let your mind wander freely.`,
+      
+      // 2: Very Calm / Low Screen Time
+      `What a beautifully balanced week! Your screen logs show a highly intentional, quiet relationship with your device. You've successfully protected your attention from the pull of endless feeds, allowing your nervous system to rest in a calm baseline. Carry this mindful pacing into the days ahead.`,
+      
+      // 3: Moderate/Restless scrolling
+      `This week witnessed a high concentration of screen activations clustered during the day. This pattern often signals a search for stimulation or quick relief during high-pressure work hours. A gentle remedy: try replacing three phone pickups with a simple physical stretch or a brief window gaze.`,
+      
+      // 4: Sleep cycle disruption alert
+      `Late-night screen activity stood out as your prominent digital signature this week. Engaging with blue light in the early hours disrupts your circadian rhythm, making high-quality deep sleep difficult to secure. Try parking your charger across the room tonight to create a physical buffer for rest.`,
+      
+      // 5: High Screen Time but Low Pickups (Deep focus / Long sessions)
+      `Your digital usage suggests fewer but much longer sessions this week. While this can sometimes indicate deep focus or study, it can also lead to screen fatigue and physical stiffness. Remember to step away every 45 minutes to let your eyes focus on distant objects and reset your physical posture.`,
+      
+      // 6: High Pickups but Low Screen Time (Micro-checking)
+      `This week, your phone checks were frequent but exceptionally short. This micro-checking habit suggests a restless hand or search for immediate notifications, keeping your brain in a state of constant anticipation. Try utilizing the Stillness Tracker to cultivate a single hour of uninterrupted quiet time today.`,
+      
+      // 7: General Active Patterns (Most active on a specific day)
+      `We noticed your digital engagement peaked significantly on ${mostActiveDay}. Mid-week surges often occur when stress levels climb and we seek secondary screens to decompress. Creating a soft buffer on your peak days can help equalize your mental energy across the entire week.`,
+      
+      // 8: Standard balanced / healthy baseline
+      `A highly harmonious week! You maintained a calm, steady stress level with very few late-night check-ins. Your digital rhythm is flowing in excellent symmetry with your daily activities, showing a clear, conscious boundary between screen time and personal space.`,
+      
+      // 9: Multi-trigger active stress reflection
+      `Your behavioral telemetry captured several active indicators this week, pointing to elevated cognitive load. When multiple triggers light up together, your nervous system is asking for a slow, physical reset. Allow yourself a few dedicated minutes of Box Breathing to return to a steady, calm center.`
+    ];
+
+    if (score > 55 && isLateNighter) return reflections[0];
+    if (score > 55 && isRestless) return reflections[1];
+    if (score < 25 && totalScreenTimeMin < 400) return reflections[2];
+    if (isRestless && isHeavyUser) return reflections[3];
+    if (isLateNighter) return reflections[4];
+    if (isHeavyUser && avgDailyPickups < 8) return reflections[5];
+    if (isRestless) return reflections[6];
+    if (mostActiveDay !== 'N/A' && score > 40) return reflections[7];
+    if (score > 50) return reflections[9];
+    return reflections[8];
+  };
+
+  if (!geminiKey) {
+    return getLocalWeeklyReflection();
+  }
 
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
   const prompt = `
@@ -276,7 +328,7 @@ Respond with only the reflection, nothing else.
     const result = await model.generateContent(prompt);
     return result.response.text().trim().replace(/^"|"$/g, '');
   } catch (e) {
-    return "This week has been a journey. Take a moment to reflect on how you've been feeling.";
+    return getLocalWeeklyReflection();
   }
 };
 
