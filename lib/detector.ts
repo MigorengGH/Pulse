@@ -21,29 +21,33 @@ export const analyzeCurrentState = async (): Promise<AnalysisResult> => {
     };
   }
 
-  const bucketBaseline = baseline.buckets[timeBucket];
+  const bucketBaseline = baseline?.buckets?.[timeBucket];
+  const avgAppSwitches = bucketBaseline?.avgAppSwitches ?? 0;
+  const avgScreenTime = bucketBaseline?.avgScreenTime ?? 0;
+  const avgSessionCount = bucketBaseline?.avgSessionCount ?? 0;
+
   const triggers: string[] = [];
   let score = 0;
 
   // ─── Deviation Scoring Rules ──────────────────────────────
 
   // 1. App switch frequency > 150% of baseline (+30)
-  if (bucketBaseline.avgAppSwitches > 0 && 
-      snapshot.appSwitchCount > bucketBaseline.avgAppSwitches * 1.5) {
+  if (avgAppSwitches > 0 && 
+      snapshot.appSwitchCount > avgAppSwitches * 1.5) {
     score += 30;
     triggers.push('More app switching than usual');
   }
 
   // 2. Screen time > 150% of baseline (+20)
-  if (bucketBaseline.avgScreenTime > 0 && 
-      snapshot.totalScreenTime > bucketBaseline.avgScreenTime * 1.5) {
+  if (avgScreenTime > 0 && 
+      snapshot.totalScreenTime > avgScreenTime * 1.5) {
     score += 20;
     triggers.push('Higher screen time than your normal');
   }
 
   // 3. Session count > 200% of baseline (+15)
-  if (bucketBaseline.avgSessionCount > 0 && 
-      snapshot.sessionCount > bucketBaseline.avgSessionCount * 2) {
+  if (avgSessionCount > 0 && 
+      snapshot.sessionCount > avgSessionCount * 2) {
     score += 15;
     triggers.push('Picking up the phone more frequently');
   }
