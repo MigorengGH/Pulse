@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { getStressColor } from '../constants/colors';
+import { Ionicons } from '@expo/vector-icons';
 
 interface OrbProps {
   stressScore: number;
@@ -56,9 +57,16 @@ export default function Orb({ stressScore }: OrbProps) {
            <Text style={styles.percentageText}>
              {Math.round(stressScore)}<Text style={styles.percentSymbol}>%</Text>
            </Text>
-           <Text style={styles.label}>
-             Aura
-           </Text>
+           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+             <Ionicons 
+               name={stressScore > 55 ? "trending-up-outline" : stressScore < 35 ? "trending-down-outline" : "ellipse-outline"} 
+               size={12} 
+               color="rgba(255, 255, 255, 0.75)" 
+             />
+             <Text style={styles.label}>
+               Aura
+             </Text>
+           </View>
         </View>
       </Animated.View>
     </View>
