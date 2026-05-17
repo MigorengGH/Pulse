@@ -29,10 +29,20 @@ export default function Home() {
   const totalScreenTime = useMemo(() => {
     const today = new Date().setHours(0, 0, 0, 0);
     const sessions = state.signals.filter(s => s.type === 'session' && s.timestamp > today && s.durationMs);
-    const totalMs = sessions.reduce((a, s) => a + (s.durationMs || 0), 0);
-    const mins = Math.round(totalMs / 60000);
+    let totalMs = sessions.reduce((a, s) => a + (s.durationMs || 0), 0);
+
+    // Include current active session if there is one!
+    if (state.currentSessionStart) {
+      totalMs += Date.now() - state.currentSessionStart;
+    }
+
+    const secs = Math.round(totalMs / 1000);
+    const mins = Math.floor(secs / 60);
+    if (state.isDemoMode && secs < 60) {
+      return `${secs}s`;
+    }
     return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
-  }, [state.signals]);
+  }, [state.signals, state.currentSessionStart, state.isDemoMode]);
 
   const lastNudge = state.nudgeHistory[0];
   const lastNudgeAge = lastNudge

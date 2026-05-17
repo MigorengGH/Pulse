@@ -284,16 +284,16 @@ export default function SettingsScreen() {
             <Divider />
             <View style={styles.row}>
               <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.label}>📱 Simulate Constantly Playing Phone</Text>
+                <Text style={styles.label}>📱 Simulate Playing Phone (15s ago)</Text>
                 <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 4 }}>
-                  Force screen active time to exceed 20 consecutive minutes.
+                  Force screen active time to simulate a 15-second active session.
                 </Text>
               </View>
               <Switch
                 value={store.currentSessionStart !== null}
                 onValueChange={(val) => {
                   if (val) {
-                    store.setCurrentSessionStart(Date.now() - 20 * 60 * 1000);
+                    store.setCurrentSessionStart(Date.now() - 15 * 1000);
                   } else {
                     store.setCurrentSessionStart(null);
                   }

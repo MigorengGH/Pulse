@@ -110,7 +110,8 @@ export const analyzeCurrentState = async (): Promise<AnalysisResult> => {
   if (state.currentSessionStart) {
     curSessionMins = (now - state.currentSessionStart) / (1000 * 60);
   }
-  const playingConstantly = curSessionMins > 15 || state.pickupsLastHour >= 5 || pickupsLastMinute >= 5;
+  const constantPlayThresholdMins = state.isDemoMode ? (15 / 60) : 15; // 15 seconds in demo mode, 15 minutes in real life
+  const playingConstantly = curSessionMins >= constantPlayThresholdMins || state.pickupsLastHour >= 5 || pickupsLastMinute >= 5;
   if (state.isCharging && isLateNightHour && playingConstantly) {
     score += 20;
     triggers.push('Playing phone constantly while charging late at night (High Stress)');
